@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import GUI from 'lil-gui'
+import { Pane } from 'tweakpane'
 import baseVertexShader from './shaders/base/vertex.glsl'
 import baseFragmentShader from './shaders/base/fragment.glsl'
 
@@ -8,14 +8,18 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  * Base
  */
 // Debug
-const gui = new GUI()
+const gui = new Pane()
+const shaderGUI = gui.addFolder({ title: 'Shader' })
+const guiTest = {
+    x: 2,
+}
+shaderGUI.addBinding(guiTest, 'x', {
+    min: 0,
+    max: 10,
+})
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
-
-// Images
-const images = [...document.querySelectorAll('.gallery-image')]
-console.log(images)
 
 // Scene
 const scene = new THREE.Scene()
