@@ -1,0 +1,19 @@
+/* BASE */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* WEBGL */
+.webgl {
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
