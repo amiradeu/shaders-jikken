@@ -9,14 +9,7 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: 'Shader' })
-const guiTest = {
-    x: 2,
-}
-shaderGUI.addBinding(guiTest, 'x', {
-    min: 0,
-    max: 10,
-})
+const shaderGUI = gui.addFolder({ title: '🌐 Grid' })
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -35,12 +28,31 @@ const material = new THREE.ShaderMaterial({
     vertexShader: baseVertexShader,
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
+    uniforms: {
+        uLineWidth: { value: 0.01 },
+        uLineAA: { value: 0 },
+    },
 })
-
+shaderGUI.addBinding(material.uniforms.uLineWidth, 'value', {
+    label: 'width',
+    min: 0,
+    max: 0.1,
+    step: 0.001,
+})
+shaderGUI.addBinding(material.uniforms.uLineAA, 'value', {
+    label: 'AA',
+    min: 0,
+    max: 0.1,
+    step: 0.001,
+})
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
+mesh.rotation.x = Math.PI * 0.5
 scene.add(mesh)
 
+// Axes helper
+const axesHelper = new THREE.AxesHelper(3)
+scene.add(axesHelper)
 /**
  * Sizes
  */
@@ -73,7 +85,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     100
 )
-camera.position.set(0.25, -0.25, 1)
+camera.position.set(0.4, 0.4, 0.4)
 scene.add(camera)
 
 // Controls
