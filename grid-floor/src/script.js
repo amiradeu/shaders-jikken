@@ -9,8 +9,10 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: '🌐 Grid' })
-
+const gridFolder = gui.addFolder({ title: '🌐 Grid Floor' })
+const debugObject = {
+    color: '#ffffff',
+}
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -29,22 +31,26 @@ const material = new THREE.ShaderMaterial({
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
     uniforms: {
-        uLineWidth: { value: 0.01 },
-        uLineAA: { value: 0 },
+        uLineThickness: { value: 0.01 },
+        uColor: { value: new THREE.Color(debugObject.color) },
     },
 })
-shaderGUI.addBinding(material.uniforms.uLineWidth, 'value', {
-    label: 'width',
+
+gridFolder.addBinding(material.uniforms.uLineThickness, 'value', {
+    label: 'thickness',
     min: 0,
     max: 0.1,
     step: 0.001,
 })
-shaderGUI.addBinding(material.uniforms.uLineAA, 'value', {
-    label: 'AA',
-    min: 0,
-    max: 0.1,
-    step: 0.001,
-})
+gridFolder
+    .addBinding(debugObject, 'color', {
+        label: 'color',
+        picker: 'inline',
+    })
+    .on('change', () => {
+        material.uniforms.uColor.value.set(debugObject.color)
+    })
+
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
 mesh.rotation.x = Math.PI * 0.5

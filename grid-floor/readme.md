@@ -1,6 +1,6 @@
-# Grid Shader
+# Grid Floor
 
-Learning how to make grid shader
+Learning how to make grid floor with shader
 
 ## Resources
 
