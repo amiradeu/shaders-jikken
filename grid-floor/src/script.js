@@ -92,6 +92,7 @@ const camera = new THREE.PerspectiveCamera(
     100
 )
 camera.position.set(0.4, 0.4, 0.4)
+// camera.position.set(1.0, 1.0, 1.0)
 scene.add(camera)
 
 // Controls

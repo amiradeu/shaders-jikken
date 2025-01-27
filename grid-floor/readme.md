@@ -1,7 +1,8 @@
 # Grid Floor
 
-Learning how to make grid floor with shader
+Learning how to make grid floor with shader.
 
 ## Resources
 
+The "Pristine Grid" shader.
 [The Best Darn Grid Shader (Yet)](https://bgolus.medium.com/the-best-darn-grid-shader-yet-727f9278b9d8)
