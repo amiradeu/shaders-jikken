@@ -31,7 +31,7 @@ const material = new THREE.ShaderMaterial({
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
     uniforms: {
-        uLineThickness: { value: 0.01 },
+        uLineThickness: { value: 0.6 },
         uColor: { value: new THREE.Color(debugObject.color) },
     },
 })
@@ -39,7 +39,7 @@ const material = new THREE.ShaderMaterial({
 gridFolder.addBinding(material.uniforms.uLineThickness, 'value', {
     label: 'thickness',
     min: 0,
-    max: 0.1,
+    max: 1,
     step: 0.001,
 })
 gridFolder
@@ -91,8 +91,7 @@ const camera = new THREE.PerspectiveCamera(
     0.001,
     50
 )
-camera.position.set(0.4, 0.4, 0.4)
-// camera.position.set(1.0, 1.0, 1.0)
+camera.position.set(0.1, 0.05, 0.1)
 scene.add(camera)
 
 // Controls
