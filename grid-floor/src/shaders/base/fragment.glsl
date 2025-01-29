@@ -3,14 +3,6 @@ uniform vec3 uColor;
 
 varying vec2 vUv;
 
-float pristineGrid(vec2 uv, vec2 lineWidth) {
-    vec2 uvDeriv = fwidth(uv);
-    vec2 lineAA = uvDeriv * 1.5;
-    vec2 gridUV = 1.0 - abs(fract(uv) * 2.0 - 1.0);
-    vec2 grid2 = smoothstep(lineWidth + lineAA, lineWidth - lineAA,gridUV);
-    return mix(grid2.x, 1.0, grid2.y);
-}
-
 void main()
 {
     vec2 lineWidth = vec2(uLineThickness);
@@ -25,11 +17,12 @@ void main()
     //float lineAA = fwidth(uv.x);
     vec2 uvDeriv = fwidth(uv);
 
-    // 💡 constant pixel width for the line
     // 💡 Phone-wire AA
     // STEP 1: ensure line does not get smaller than one pixel
     // if so, we will clamp it to one pixel
-    vec2 drawWidth = max(uvDeriv, lineWidth);
+    // vec2 drawWidth = max(uvDeriv, lineWidth);
+    // clamp to 0.5 to ensure line fades to grey, not black
+    vec2 drawWidth = clamp(lineWidth, uvDeriv, vec2(0.5));
 
     // 💡 1 pixel wide smoothstep can be too sharp causing aliasing
     // hence using 1.5 pixel wide smoothstep
@@ -57,8 +50,6 @@ void main()
     float grid = mix(grid2.x, 1.0, grid2.y);
     
     vec3 color = vec3(grid) * uColor;
-    // using the function to make multiple squares?
-    // vec3 color = vec3(pristineGrid(uv, lineWidth)) * uColor;
 
     gl_FragColor = vec4(color, 1.0);
 }
