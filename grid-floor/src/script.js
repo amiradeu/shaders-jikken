@@ -30,8 +30,9 @@ const material = new THREE.ShaderMaterial({
     vertexShader: baseVertexShader,
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
+    transparent: true,
     uniforms: {
-        uLineThickness: { value: 0.6 },
+        uLineThickness: { value: 0.02 },
         uColor: { value: new THREE.Color(debugObject.color) },
     },
 })

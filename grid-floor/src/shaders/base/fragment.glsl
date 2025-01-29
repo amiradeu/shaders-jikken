@@ -26,10 +26,14 @@ void main()
     vec2 uvDeriv = fwidth(uv);
 
     // 💡 constant pixel width for the line
-    vec2 drawWidth = uvDeriv * lineWidth;
+    // 💡 Phone-wire AA
+    // STEP 1: ensure line does not get smaller than one pixel
+    // if so, we will clamp it to one pixel
+    vec2 drawWidth = max(uvDeriv, lineWidth);
 
     // 💡 1 pixel wide smoothstep can be too sharp causing aliasing
     // hence using 1.5 pixel wide smoothstep
+    // AA - anti-aliasing
     vec2 lineAA = uvDeriv * 1.5;
     
     //💡 prepare uv for lines
@@ -43,6 +47,12 @@ void main()
     // use the derivative to make the lines smooth
     //float line = smoothstep(lineWidth.x + lineAA, lineWidth.x - lineAA,lineUV);
     vec2 grid2 = smoothstep(drawWidth + lineAA, drawWidth - lineAA, gridUV);
+
+    // 💡 Phone-wire AA
+    // STEP 2: fades the line out as it gets thinner
+    // how thick we want divided by how thick we’re drawing
+    grid2 *= clamp(lineWidth / drawWidth, 0.0, 1.0);
+
     // overlap xy lines
     float grid = mix(grid2.x, 1.0, grid2.y);
     
