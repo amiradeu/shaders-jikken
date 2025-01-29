@@ -14,8 +14,11 @@ void main()
     //   to create anti-aliasing line with smoothstep
     // how much a specific value is changing between one pixel and the next
     // width change depending on angle & distance from camera can be found with space partial derivatives
+    // fwidth - approximation of derivatives
     //float lineAA = fwidth(uv.x);
-    vec2 uvDeriv = fwidth(uv);
+    // vec2 uvDeriv = fwidth(uv);
+    vec4 uvDDXY = vec4(dFdx(uv), dFdy(uv));
+    vec2 uvDeriv = vec2(length(uvDDXY.xz), length(uvDDXY.yw));
 
     // 💡 Invert Line Trick
     // since 0.5 clamp was use, to handle line thickness > 0.5
@@ -60,7 +63,7 @@ void main()
     // anti-aliased lines start to merge
     grid2 = mix(grid2, targetWidth, clamp(uvDeriv * 2.0 - 1.0, 0.0, 1.0));
     grid2 = invertLine ? 1.0 - grid2 : grid2;
-    
+
     // overlap xy lines
     float grid = mix(grid2.x, 1.0, grid2.y);
     
