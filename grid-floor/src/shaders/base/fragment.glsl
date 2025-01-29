@@ -46,6 +46,13 @@ void main()
     // how thick we want divided by how thick we’re drawing
     grid2 *= clamp(lineWidth / drawWidth, 0.0, 1.0);
 
+    // 💡 Moire Suppresion
+    // grid cells < a pixel(when derivative > 1.0), moire pattern can appear
+    // note: after the 0.5 clamp, moire would be more pronounced, but in my case, i do not see any moire
+    // fade to solid color when 0.5 > derivative > 1.0 
+    // anti-aliased lines start to merge
+    grid2 = mix(grid2, lineWidth, clamp(uvDeriv * 2.0 - 1.0, 0.0, 1.0));
+
     // overlap xy lines
     float grid = mix(grid2.x, 1.0, grid2.y);
     
