@@ -66,7 +66,7 @@ scene.add(gridFloor)
 
 // Fog
 // color, density
-scene.fog = new THREE.Fog(debugObject.fogColor, 1, 5)
+scene.fog = new THREE.Fog(debugObject.fogColor, 1, 10)
 scene.background = new THREE.Color(debugObject.backgroundColor)
 
 const fogFolder = gui.addFolder({ title: '💨 Fog' })
@@ -139,6 +139,8 @@ scene.add(camera)
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.minDistance = 0.5
+controls.maxDistance = 15
 
 /**
  * Renderer
