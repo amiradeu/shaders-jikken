@@ -1,3 +1,5 @@
+#include <fog_pars_fragment>
+
 uniform float uLineThickness;
 uniform vec3 uColor;
 
@@ -70,4 +72,6 @@ void main()
     vec3 color = vec3(grid) * uColor;
 
     gl_FragColor = vec4(color, 1.0);
+
+    #include <fog_fragment>
 }

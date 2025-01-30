@@ -12,7 +12,10 @@ const gui = new Pane()
 const gridFolder = gui.addFolder({ title: '🌐 Grid Floor' })
 const debugObject = {
     color: '#ffffff',
+    fogColor: '#0b0c0b',
+    backgroundColor: '#0a0a0a',
 }
+
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -23,7 +26,7 @@ const scene = new THREE.Scene()
  * Test mesh
  */
 // Geometry
-const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
+const geometry = new THREE.PlaneGeometry(10, 10, 32, 32)
 
 // Material
 const material = new THREE.ShaderMaterial({
@@ -34,7 +37,11 @@ const material = new THREE.ShaderMaterial({
     uniforms: {
         uLineThickness: { value: 0.02 },
         uColor: { value: new THREE.Color(debugObject.color) },
+        fogColor: { value: new THREE.Color(debugObject.color) },
+        fogNear: { value: 1 },
+        fogFar: { value: 5 },
     },
+    fog: true,
 })
 
 gridFolder.addBinding(material.uniforms.uLineThickness, 'value', {
@@ -52,14 +59,48 @@ gridFolder
         material.uniforms.uColor.value.set(debugObject.color)
     })
 
-// Mesh
-const mesh = new THREE.Mesh(geometry, material)
-mesh.rotation.x = Math.PI * 0.5
-scene.add(mesh)
+// Grid Floor
+const gridFloor = new THREE.Mesh(geometry, material)
+gridFloor.rotation.x = Math.PI * 0.5
+scene.add(gridFloor)
+
+// Fog
+// color, density
+scene.fog = new THREE.Fog(debugObject.fogColor, 1, 5)
+scene.background = new THREE.Color(debugObject.backgroundColor)
+
+const fogFolder = gui.addFolder({ title: '💨 Fog' })
+
+fogFolder.addBinding(scene.fog, 'near', {
+    label: 'near',
+    min: -5,
+    max: 2,
+    step: 0.1,
+})
+fogFolder.addBinding(scene.fog, 'far', {
+    label: 'far',
+    min: 2,
+    max: 20,
+    step: 0.1,
+})
+fogFolder
+    .addBinding(debugObject, 'fogColor', {
+        label: 'color',
+    })
+    .on('change', () => {
+        scene.fog.color.set(debugObject.fogColor)
+    })
+
+gui.addBinding(debugObject, 'backgroundColor', {
+    label: 'background',
+}).on('change', () => {
+    scene.background = new THREE.Color(debugObject.backgroundColor)
+})
 
 // Axes helper
 const axesHelper = new THREE.AxesHelper(3)
 scene.add(axesHelper)
+
 /**
  * Sizes
  */
@@ -89,10 +130,10 @@ window.addEventListener('resize', () => {
 const camera = new THREE.PerspectiveCamera(
     75,
     sizes.width / sizes.height,
-    0.001,
+    0.1,
     50
 )
-camera.position.set(0.1, 0.05, 0.1)
+camera.position.set(1, 1, 1)
 scene.add(camera)
 
 // Controls
