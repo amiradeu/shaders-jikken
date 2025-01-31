@@ -1,11 +1,13 @@
 #include <fog_pars_fragment>
 
-uniform float uLineThickness;
+uniform float uGridScale;
+uniform float uGridThickness;
+uniform float uGridCross;
+uniform vec3 uGridColor;
+uniform float uCrossScale;
 uniform float uCrossThickness;
 uniform float uCross;
-uniform vec3 uColor;
 uniform vec3 uCrossColor;
-
 
 varying vec2 vUv;
 
@@ -70,7 +72,9 @@ float gridFloor(vec2 uv, vec2 lineWidth) {
     return grid;
 }
 
-float crossFloor(vec2 uv, vec2 lineWidth, float crossWidth) {
+float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
+    vec2 lineWidth = vec2(thickness);
+
     //💡 derivatives of original uv
     //   to create anti-aliasing line with smoothstep
     // how much a specific value is changing between one pixel and the next
@@ -104,13 +108,21 @@ float crossFloor(vec2 uv, vec2 lineWidth, float crossWidth) {
     // 👉 0-1-0(shift) make white at center(0,0) position
     // (fract) - make sawtooth wave
     //float lineUV = 1.0 - abs(fract(uv.x) * 2.0 - 1.0);
-    vec2 gridUV = abs(fract(uv) * 2.0 - 1.0);
+    float barX = 1.0 - abs(fract(uv.x * scale) * 2.0 - 1.0);
+    //step(0.4, mod(uv.x * scale, 1.0));
+    //bar *= step(0.8, mod(uv.y * scale + 0.2, 1.0));
+    float barY = 1.0 - abs(fract(uv.y * scale) * 2.0 - 1.0);
+    //step(0.8, mod(uv.x * scale + 0.2, 1.0)) * step(0.4, mod(uv.y * scale, 1.0));
+    float strength = mix(barX, 1.0, barY);
+    
+    vec2 gridUV = vec2(strength);
     gridUV = invertLine ? gridUV : 1.0 - gridUV;
 
     //💡 repeating lines
     // use the derivative to make the lines smooth
     //float line = smoothstep(lineWidth.x + lineAA, lineWidth.x - lineAA,lineUV);
-    vec2 grid2 = smoothstep(drawWidth + lineAA + crossWidth, drawWidth - lineAA - crossWidth, gridUV);
+    vec2 grid2 = smoothstep(drawWidth + lineAA, drawWidth - lineAA, gridUV);
+    // grid2 = gridUV;
 
     // 💡 Phone-wire AA
     // STEP 2: fades the line out as it gets thinner
@@ -133,21 +145,19 @@ float crossFloor(vec2 uv, vec2 lineWidth, float crossWidth) {
 
 void main()
 {
-    vec2 lineWidth = vec2(uLineThickness);
+    vec2 lineWidth = vec2(uGridThickness);
     //💡 scaling uv to get multiple repeating lines
-    vec2 uv = vUv * 50.0;
+    vec2 uv = vUv * 1.0;
 
     // grid floor
     float grid = gridFloor(uv, lineWidth);
+    vec3 gridColor = vec3(grid) * uGridColor;
 
     // cross grid
-    // float barX = step(0.4, mod(uv.x - 0.2, 1.0)) * step(0.8, mod(uv.y, 1.0));
-    // float barY = step(0.8, mod(uv.x, 1.0)) * step(0.4, mod(uv.y - 0.2, 1.0));
-    // float cross = barX + barY;
-    float crossUv = crossFloor(uv, vec2(uCrossThickness), uCross);
-
-    grid = mix(grid, 1.0, crossUv);
-    vec3 color = vec3(grid) * uColor;
+    float crossUv = crossFloor(uv, uCrossScale, uCrossThickness, uCross);
+    vec3 crossColor = vec3(crossUv) * uCrossColor;
+    
+    vec3 color = gridColor + crossColor;
 
     gl_FragColor = vec4(color, 1.0);
 

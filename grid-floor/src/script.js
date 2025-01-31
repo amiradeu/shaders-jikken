@@ -9,10 +9,10 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const gridFolder = gui.addFolder({ title: '🌐 Grid Floor' })
+
 const debugObject = {
     color: '#ffffff',
-    crossColor: '#ffffff',
+    crossColor: '#e0ff57',
     fogColor: '#0b0c0b',
     backgroundColor: '#0a0a0a',
 }
@@ -36,12 +36,19 @@ const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     transparent: true,
     uniforms: {
-        uLineThickness: { value: 0.02 },
-        uColor: { value: new THREE.Color(debugObject.color) },
+        // Grid
+        uGridScale: { value: 10.0 },
+        uGridThickness: { value: 0.02 },
+        uGridCross: { value: 1.0 },
+        uGridColor: { value: new THREE.Color(debugObject.color) },
+
+        // Cross
+        uCrossScale: { value: 10.0 },
         uCrossThickness: { value: 0.02 },
-        uCross: { value: 0.03 },
+        uCross: { value: 0.2 },
         uCrossColor: { value: new THREE.Color(debugObject.crossColor) },
 
+        // Fog
         fogColor: { value: new THREE.Color(debugObject.fogColor) },
         fogNear: { value: 1 },
         fogFar: { value: 5 },
@@ -49,40 +56,58 @@ const material = new THREE.ShaderMaterial({
     fog: true,
 })
 
-gridFolder.addBinding(material.uniforms.uLineThickness, 'value', {
-    label: 'line',
+const gridFolder = gui.addFolder({ title: '🌐 Grid Floor' })
+gridFolder.addBinding(material.uniforms.uGridScale, 'value', {
+    label: 'scale',
+    min: 0,
+    max: 10,
+    step: 0.1,
+})
+gridFolder.addBinding(material.uniforms.uGridThickness, 'value', {
+    label: 'thickness',
     min: 0,
     max: 1,
     step: 0.001,
+})
+gridFolder.addBinding(material.uniforms.uGridCross, 'value', {
+    label: 'cross',
+    min: 0,
+    max: 1,
+    step: 0.01,
 })
 gridFolder
     .addBinding(debugObject, 'color', {
         label: 'color',
-        picker: 'inline',
     })
     .on('change', () => {
-        material.uniforms.uColor.value.set(debugObject.color)
+        material.uniforms.uGridColor.value.set(debugObject.color)
     })
 
-gridFolder.addBinding(material.uniforms.uCrossThickness, 'value', {
-    label: 'cross thickness',
+const crossFolder = gui.addFolder({ title: '❎ Cross Floor' })
+crossFolder.addBinding(material.uniforms.uCrossScale, 'value', {
+    label: 'scale',
+    min: 0,
+    max: 10,
+    step: 1,
+})
+crossFolder.addBinding(material.uniforms.uCrossThickness, 'value', {
+    label: 'thickness',
     min: 0,
     max: 1,
     step: 0.001,
 })
-gridFolder.addBinding(material.uniforms.uCross, 'value', {
+crossFolder.addBinding(material.uniforms.uCross, 'value', {
     label: 'cross',
     min: 0,
-    max: 1,
-    step: 0.001,
+    max: 10,
+    step: 0.01,
 })
-gridFolder
+crossFolder
     .addBinding(debugObject, 'crossColor', {
         label: 'color',
-        picker: 'inline',
     })
     .on('change', () => {
-        material.uniforms.uColor.value.set(debugObject.crossColor)
+        material.uniforms.uCrossColor.value.set(debugObject.crossColor)
     })
 
 // Grid Floor
@@ -92,7 +117,7 @@ scene.add(gridFloor)
 
 // Fog
 // color, density
-scene.fog = new THREE.Fog(debugObject.fogColor, 1, 10)
+scene.fog = new THREE.Fog(debugObject.fogColor, 1, 2000)
 scene.background = new THREE.Color(debugObject.backgroundColor)
 
 const fogFolder = gui.addFolder({ title: '💨 Fog' })
