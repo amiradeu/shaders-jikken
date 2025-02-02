@@ -88,7 +88,7 @@ crossFolder.addBinding(material.uniforms.uCrossScale, 'value', {
     label: 'scale',
     min: 0,
     max: 10,
-    step: 1,
+    step: 0.1,
 })
 crossFolder.addBinding(material.uniforms.uCrossThickness, 'value', {
     label: 'thickness',
@@ -99,7 +99,7 @@ crossFolder.addBinding(material.uniforms.uCrossThickness, 'value', {
 crossFolder.addBinding(material.uniforms.uCross, 'value', {
     label: 'cross',
     min: 0,
-    max: 10,
+    max: 1,
     step: 0.01,
 })
 crossFolder
@@ -184,7 +184,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     50
 )
-camera.position.set(1, 1, 1)
+camera.position.set(6, 6, 6)
 scene.add(camera)
 
 // Controls

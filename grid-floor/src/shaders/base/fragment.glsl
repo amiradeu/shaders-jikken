@@ -108,12 +108,17 @@ float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
     // 👉 0-1-0(shift) make white at center(0,0) position
     // (fract) - make sawtooth wave
     //float lineUV = 1.0 - abs(fract(uv.x) * 2.0 - 1.0);
-    float barX = 1.0 - abs(fract(uv.x * scale) * 2.0 - 1.0);
-    //step(0.4, mod(uv.x * scale, 1.0));
-    //bar *= step(0.8, mod(uv.y * scale + 0.2, 1.0));
-    float barY = 1.0 - abs(fract(uv.y * scale) * 2.0 - 1.0);
-    //step(0.8, mod(uv.x * scale + 0.2, 1.0)) * step(0.4, mod(uv.y * scale, 1.0));
-    float strength = mix(barX, 1.0, barY);
+    // float barX = step(0.4, mod(uv.x * scale, 1.0)) * step(0.8, mod(uv.y * scale + 0.2, 1.0));
+    // float barY = step(0.8, mod(uv.x * scale + 0.2, 1.0)) * step(0.4, mod(uv.y * scale, 1.0));
+
+    float barX = smoothstep(0.5 - lineWidth.x, 0.50, fract(uv.x)) * smoothstep(0.5 + lineWidth.x, 0.50, fract(uv.x));
+    float barY = smoothstep(0.5 - lineWidth.y, 0.50, fract(uv.y)) * smoothstep(0.5 + lineWidth.y, 0.50, fract(uv.y));
+    // float barY = smoothstep(0.5 - lineWidth.x, 0.5 + lineWidth.x, uv.x) * smoothstep(0.5 - lineWidth.y, 0.5 + lineWidth.y, uv.y);
+    // barX *= smoothstep(1.0 - lineWidth.y - lineAA.y, 1.0 - lineWidth.y + lineAA.y, mod(uv.y + lineWidth.y, 1.0));
+    // float barY = smoothstep(1.0 - lineWidth.x - lineAA.x, 1.0 - lineWidth.x + lineAA.x, mod(uv.x + lineWidth.x, 1.0));
+    // barY *= smoothstep(1.0 - crossIntensity - lineWidth.y - lineAA.y, 1.0 - crossIntensity - lineWidth.y + lineAA.y, mod(uv.y, 1.0));
+    
+    float strength = barX + barY;
     
     vec2 gridUV = vec2(strength);
     gridUV = invertLine ? gridUV : 1.0 - gridUV;
