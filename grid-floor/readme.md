@@ -2,7 +2,7 @@
 
 Learning how to make grid floor with glsl.
 
-🚀 [Live Demo](https://grid-floor-hbmegrz42-amira-deurasehs-projects.vercel.app/)
+🚀 [Live Demo](https://grid-floor.vercel.app/)
 
 <img src="./docs/grid-floor.png" />
 <img src="./docs/grid-floor.gif" />

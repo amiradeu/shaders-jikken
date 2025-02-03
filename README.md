@@ -4,6 +4,6 @@ A collection of shaders experiments
 
 ## Grid Floor
 
-🚀 [Live Demo](https://grid-floor-hbmegrz42-amira-deurasehs-projects.vercel.app/)
+🚀 [Live Demo](https://grid-floor.vercel.app/)
 
 <img src="./grid-floor/docs/grid-floor.gif" />
