@@ -37,13 +37,10 @@ const material = new THREE.ShaderMaterial({
     transparent: true,
     uniforms: {
         // Grid
-        uGridScale: { value: 10.0 },
         uGridThickness: { value: 0.02 },
-        uGridCross: { value: 1.0 },
         uGridColor: { value: new THREE.Color(debugObject.color) },
 
         // Cross
-        uCrossScale: { value: 10.0 },
         uCrossThickness: { value: 0.02 },
         uCross: { value: 0.2 },
         uCrossColor: { value: new THREE.Color(debugObject.crossColor) },
@@ -57,23 +54,11 @@ const material = new THREE.ShaderMaterial({
 })
 
 const gridFolder = gui.addFolder({ title: '🌐 Grid Floor' })
-gridFolder.addBinding(material.uniforms.uGridScale, 'value', {
-    label: 'scale',
-    min: 0,
-    max: 10,
-    step: 0.1,
-})
 gridFolder.addBinding(material.uniforms.uGridThickness, 'value', {
     label: 'thickness',
     min: 0,
     max: 1,
     step: 0.001,
-})
-gridFolder.addBinding(material.uniforms.uGridCross, 'value', {
-    label: 'cross',
-    min: 0,
-    max: 1,
-    step: 0.01,
 })
 gridFolder
     .addBinding(debugObject, 'color', {
@@ -84,12 +69,6 @@ gridFolder
     })
 
 const crossFolder = gui.addFolder({ title: '❎ Cross Floor' })
-crossFolder.addBinding(material.uniforms.uCrossScale, 'value', {
-    label: 'scale',
-    min: 0,
-    max: 10,
-    step: 0.1,
-})
 crossFolder.addBinding(material.uniforms.uCrossThickness, 'value', {
     label: 'thickness',
     min: 0,
@@ -117,7 +96,7 @@ scene.add(gridFloor)
 
 // Fog
 // color, density
-scene.fog = new THREE.Fog(debugObject.fogColor, 1, 50)
+scene.fog = new THREE.Fog(debugObject.fogColor, 1, 10)
 scene.background = new THREE.Color(debugObject.backgroundColor)
 
 const fogFolder = gui.addFolder({ title: '💨 Fog' })
@@ -184,7 +163,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     50
 )
-camera.position.set(6, 6, 6)
+camera.position.set(1, 1, 1)
 scene.add(camera)
 
 // Controls

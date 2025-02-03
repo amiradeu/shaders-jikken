@@ -1,8 +1,6 @@
 #include <fog_pars_fragment>
 
-uniform float uGridScale;
 uniform float uGridThickness;
-uniform float uGridCross;
 uniform vec3 uGridColor;
 uniform float uCrossScale;
 uniform float uCrossThickness;
@@ -89,7 +87,8 @@ float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
     // since 0.5 clamp was use, to handle line thickness > 0.5
     // draw black lines on white offset by half a grid width
     bool invertLine = lineWidth.x > 0.5;
-    vec2 targetWidth = invertLine ? 1.0 - lineWidth : lineWidth;
+    // vec2 targetWidth = invertLine ? 1.0 - lineWidth : lineWidth;
+    vec2 targetWidth = lineWidth;
 
     // 💡 Phone-wire AA
     // STEP 1: ensure line does not get smaller than one pixel
@@ -103,14 +102,19 @@ float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
     // AA - anti-aliasing
     vec2 lineAA = uvDeriv * 1.5;
     
+    // Cross Intensity
+    float cutOffX = abs(fract(uv.y) * 2.0 - 1.0) > crossIntensity ? 1.0 : 0.0;
+    float cutOffY = abs(fract(uv.x) * 2.0 - 1.0) > crossIntensity ? 1.0 : 0.0;
+
     //💡 prepare uv for lines
     // 0-1(uv) 👉 0-2(multiply) 👉 -1-0-1(shift) 👉 1-0-1(absolute)
     // 👉 0-1-0(shift) make white at center(0,0) position
     // (fract) - make sawtooth wave
     //float lineUV = 1.0 - abs(fract(uv.x) * 2.0 - 1.0);
     // vec2 gridUV = abs(fract(uv) * 2.0 - 1.0);
-    float uvX = abs(fract(uv.x) * 2.0 - 1.0) + abs(fract(uv.y) * 2.0 - 1.0) * (1.0 - crossIntensity) * 0.05;
-    float uvY = abs(fract(uv.y) * 2.0 - 1.0) + abs(fract(uv.x) * 2.0 - 1.0) * (1.0 - crossIntensity) * 0.05;
+    // UV
+    float uvX = abs(fract(uv.x) * 2.0 - 1.0) + cutOffX;
+    float uvY = abs(fract(uv.y) * 2.0 - 1.0) + cutOffY;
     vec2 gridUV = vec2(uvX, uvY);
 
     // gridUV = invertLine ? gridUV : 1.0 - gridUV;
@@ -131,12 +135,10 @@ float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
     // fade to solid color when 0.5 > derivative > 1.0 
     // anti-aliased lines start to merge
     grid2 = mix(grid2, targetWidth, clamp(uvDeriv * 2.0 - 1.0, 0.0, 1.0));
-    grid2 = invertLine ? 1.0 - grid2 : grid2;
+    // grid2 = invertLine ? 1.0 - grid2 : grid2;
 
     // overlap xy lines
     float grid = mix(grid2.x, 1.0, grid2.y);
-
-    // float grid = mix(uvX, 1.0, uvX);
 
     return grid;
 }
@@ -145,7 +147,7 @@ void main()
 {
     vec2 lineWidth = vec2(uGridThickness);
     //💡 scaling uv to get multiple repeating lines
-    vec2 uv = vUv * 50.0;
+    vec2 uv = vUv * 20.0;
 
     // grid floor
     float grid = gridFloor(uv, lineWidth);
@@ -155,7 +157,7 @@ void main()
     float crossUv = crossFloor(uv, uCrossScale, uCrossThickness, uCross);
     vec3 crossColor = vec3(crossUv) * uCrossColor;
     
-    vec3 color =  crossColor;
+    vec3 color =  gridColor + crossColor;
 
     gl_FragColor = vec4(color, 1.0);
 
