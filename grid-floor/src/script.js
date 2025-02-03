@@ -117,7 +117,7 @@ scene.add(gridFloor)
 
 // Fog
 // color, density
-scene.fog = new THREE.Fog(debugObject.fogColor, 1, 2000)
+scene.fog = new THREE.Fog(debugObject.fogColor, 1, 50)
 scene.background = new THREE.Color(debugObject.backgroundColor)
 
 const fogFolder = gui.addFolder({ title: '💨 Fog' })
@@ -131,7 +131,7 @@ fogFolder.addBinding(scene.fog, 'near', {
 fogFolder.addBinding(scene.fog, 'far', {
     label: 'far',
     min: 2,
-    max: 20,
+    max: 50,
     step: 0.1,
 })
 fogFolder
