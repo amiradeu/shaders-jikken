@@ -1,0 +1,40 @@
+/* BASE */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* WEBGL */
+.webgl {
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+/* GITHUB */
+.github {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+}
+
+.github a {
+    display: flex;
+    padding: 0.4em 1em;
+    text-decoration: none;
+    border-radius: 1em;
+
+    background-color: white;
+    color: black;
+}
+
+.github a:hover {
+    text-decoration: underline;
+}
