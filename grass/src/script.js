@@ -9,13 +9,21 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: 'Shader' })
-const guiTest = {
-    x: 2,
+const grassDebug = gui.addFolder({ title: '🌿 Grass' })
+const parameters = {
+    count: 100,
+    width: 0.4,
 }
-shaderGUI.addBinding(guiTest, 'x', {
-    min: 0,
-    max: 10,
+
+grassDebug.addBinding(parameters, 'count', {
+    min: 1,
+    max: 500,
+})
+
+grassDebug.addBinding(parameters, 'width', {
+    min: 0.1,
+    max: 0.5,
+    step: 0.01,
 })
 
 // Canvas
@@ -25,21 +33,90 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 /**
- * Test mesh
+ * Grass
  */
 // Geometry
-const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
+const geometry = new THREE.BufferGeometry()
+
+// the center of triangle at the bottom (x,z)
+const centers = new Float32Array(parameters.count * 2)
+// the offset of triangle (3 vertex) * (3 axis)
+const positions = new Float32Array(parameters.count * 3 * 3)
+
+for (let i = 0; i < parameters.count * 2; i++) {
+    centers[i] = (Math.random() - 0.5) * 5
+}
+
+// for (let i = 0; i < parameters.count; i++) {
+//     const i2 = i * 2
+//     console.log('center ', i2, ': ', centers[i2], centers[i2 + 1])
+// }
+
+for (let i = 0; i < parameters.count; i++) {
+    const i2 = i * 2
+    const i9 = i * 3 * 3
+
+    //left
+    positions[i9 + 0] = centers[i2] - parameters.width
+    positions[i9 + 1] = 0
+    positions[i9 + 2] = centers[i2 + 1]
+
+    //right
+    positions[i9 + 3] = centers[i2] + parameters.width
+    positions[i9 + 4] = 0
+    positions[i9 + 5] = centers[i2 + 1]
+
+    //top
+    positions[i9 + 6] = centers[i2]
+    positions[i9 + 7] = parameters.width * 2
+    positions[i9 + 8] = centers[i2 + 1]
+}
+
+// for (let i = 0; i < parameters.count * 3; i++) {
+//     const i3 = i * 3
+
+//     console.log(
+//         'vertex ',
+//         i3,
+//         ': ',
+//         positions[i3],
+//         positions[i3 + 1],
+//         positions[i3 + 2]
+//     )
+// }
+
+geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3)
+)
+// geometry.setAttribute('center', new THREE.Float32BufferAttribute(centers, 1))
+// geometry.setAttribute('center', new THREE.Float32BufferAttribute(offsetsFromCenters, 3))
 
 // Material
 const material = new THREE.ShaderMaterial({
     vertexShader: baseVertexShader,
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
+    uniforms: {
+        uTime: { value: 0 },
+    },
 })
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
+
+// Cube
+const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial()
+)
+cube.position.y = 1
+// scene.add(cube)
+
+// Axes helper
+const axesHelper = new THREE.AxesHelper(3)
+scene.add(axesHelper)
 
 /**
  * Sizes
@@ -73,7 +150,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     100
 )
-camera.position.set(0.25, -0.25, 1)
+camera.position.set(1, 1, 1)
 scene.add(camera)
 
 // Controls
@@ -92,7 +169,14 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Animate
  */
+const clock = new THREE.Clock()
+
 const tick = () => {
+    const elapsedTime = clock.getElapsedTime()
+
+    // Update Material
+    material.uniforms.uTime.value = elapsedTime
+
     // Update controls
     controls.update()
 

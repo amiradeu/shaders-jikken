@@ -10,3 +10,6 @@ dist/
 
 # vercel
 .vercel
+
+# vite
+.vite
