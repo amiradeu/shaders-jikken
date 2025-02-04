@@ -41,6 +41,10 @@ const material = new THREE.ShaderMaterial({
 const mesh = new THREE.Mesh(geometry, material)
 scene.add(mesh)
 
+// Axes helper
+const axesHelper = new THREE.AxesHelper(3)
+scene.add(axesHelper)
+
 /**
  * Sizes
  */
@@ -92,7 +96,10 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Animate
  */
+const clock = new THREE.Clock()
 const tick = () => {
+    const elapsedTime = clock.getElapsedTime()
+
     // Update controls
     controls.update()
 
