@@ -6,6 +6,7 @@ uniform float uCrossScale;
 uniform float uCrossThickness;
 uniform float uCross;
 uniform vec3 uCrossColor;
+uniform vec3 uFloorColor;
 
 varying vec2 vUv;
 
@@ -158,6 +159,10 @@ void main()
     vec3 crossColor = vec3(crossUv) * uCrossColor;
     
     vec3 color =  gridColor + crossColor;
+
+    color.x = color.x < 0.2? uFloorColor.x : color.x;
+    color.y = color.y < 0.2? uFloorColor.y : color.y;
+    color.z = color.z < 0.2? uFloorColor.z : color.z;
 
     gl_FragColor = vec4(color, 1.0);
 
