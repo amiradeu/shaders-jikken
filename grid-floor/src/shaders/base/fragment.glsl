@@ -6,6 +6,7 @@ uniform float uCrossScale;
 uniform float uCrossThickness;
 uniform float uCross;
 uniform vec3 uCrossColor;
+uniform vec3 uFloorColor;
 
 varying vec2 vUv;
 
@@ -151,13 +152,15 @@ void main()
 
     // grid floor
     float grid = gridFloor(uv, lineWidth);
-    vec3 gridColor = vec3(grid) * uGridColor;
+    // mix with floor color
+    vec3 gridColor = mix(uFloorColor, uGridColor, vec3(grid));
 
     // cross grid
     float crossUv = crossFloor(uv, uCrossScale, uCrossThickness, uCross);
-    vec3 crossColor = vec3(crossUv) * uCrossColor;
+    // 💡 to add more grids on top, ensure the base is taken from previous gridColor
+    vec3 gridColor2 = mix(gridColor, uCrossColor, vec3(crossUv));
     
-    vec3 color =  gridColor + crossColor;
+    vec3 color =  gridColor2;
 
     gl_FragColor = vec4(color, 1.0);
 

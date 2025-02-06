@@ -11,10 +11,11 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
 const gui = new Pane()
 
 const debugObject = {
-    color: '#ffffff',
-    crossColor: '#e0ff57',
-    fogColor: '#0b0c0b',
-    backgroundColor: '#0a0a0a',
+    color: '#c4d6ff',
+    crossColor: '#7a91df',
+    fogColor: '#c3dce2',
+    backgroundColor: '#e9f6f8',
+    floorColor: '#ffffff',
 }
 
 // Canvas
@@ -36,6 +37,9 @@ const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     transparent: true,
     uniforms: {
+        // Floor
+        uFloorColor: { value: new THREE.Color(debugObject.floorColor) },
+
         // Grid
         uGridThickness: { value: 0.02 },
         uGridColor: { value: new THREE.Color(debugObject.color) },
@@ -121,11 +125,22 @@ fogFolder
         scene.fog.color.set(debugObject.fogColor)
     })
 
-gui.addBinding(debugObject, 'backgroundColor', {
-    label: 'background',
-}).on('change', () => {
-    scene.background = new THREE.Color(debugObject.backgroundColor)
-})
+const envFolder = gui.addFolder({ title: '🏡 Environment' })
+envFolder
+    .addBinding(debugObject, 'backgroundColor', {
+        label: 'sky',
+    })
+    .on('change', () => {
+        scene.background = new THREE.Color(debugObject.backgroundColor)
+    })
+
+envFolder
+    .addBinding(debugObject, 'floorColor', {
+        label: 'Floor',
+    })
+    .on('change', () => {
+        material.uniforms.uFloorColor.value.set(debugObject.floorColor)
+    })
 
 // Axes helper
 const axesHelper = new THREE.AxesHelper(3)
