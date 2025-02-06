@@ -4,16 +4,23 @@ Learning how to make grid floor with glsl.
 
 🚀 [Live Demo](https://grid-floor.vercel.app/)
 
+💡 light style
+<img src="./docs/light-floor.png" />
+🌚 dark style
 <img src="./docs/grid-floor.png" />
-<img src="./docs/grid-floor.gif" />
 
 ## Customisation
 
 -   Grid : thickness, color
 -   Cross : thickness, cross intensity, color
 -   Fog : color, near, far
+-   Environment: sky color, floor color
 
 <img src="./docs/grid-floor-2.png" />
+
+## Previous version
+
+<img src="./docs/grid-floor.gif" />
 
 ## Accidental Founds
 
