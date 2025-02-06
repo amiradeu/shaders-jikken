@@ -152,17 +152,15 @@ void main()
 
     // grid floor
     float grid = gridFloor(uv, lineWidth);
-    vec3 gridColor = vec3(grid) * uGridColor;
+    // mix with floor color
+    vec3 gridColor = mix(uFloorColor, uGridColor, vec3(grid));
 
     // cross grid
     float crossUv = crossFloor(uv, uCrossScale, uCrossThickness, uCross);
-    vec3 crossColor = vec3(crossUv) * uCrossColor;
+    // 💡 to add more grids on top, ensure the base is taken from previous gridColor
+    vec3 gridColor2 = mix(gridColor, uCrossColor, vec3(crossUv));
     
-    vec3 color =  gridColor + crossColor;
-
-    color.x = color.x < 0.2? uFloorColor.x : color.x;
-    color.y = color.y < 0.2? uFloorColor.y : color.y;
-    color.z = color.z < 0.2? uFloorColor.z : color.z;
+    vec3 color =  gridColor2;
 
     gl_FragColor = vec4(color, 1.0);
 

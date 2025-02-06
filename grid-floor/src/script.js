@@ -12,7 +12,7 @@ const gui = new Pane()
 
 const debugObject = {
     color: '#c4d6ff',
-    crossColor: '#a7bbff',
+    crossColor: '#7a91df',
     fogColor: '#c3dce2',
     backgroundColor: '#e9f6f8',
     floorColor: '#ffffff',
