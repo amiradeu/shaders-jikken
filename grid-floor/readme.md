@@ -1,6 +1,6 @@
 # Grid Floor
 
-Learning how to make grid floor with glsl.
+Learning how to make grid floor with glsl. Based on The "Pristine Grid" shader from [The Best Darn Grid Shader (Yet)](https://bgolus.medium.com/the-best-darn-grid-shader-yet-727f9278b9d8)
 
 🚀 [Live Demo](https://grid-floor.vercel.app/)
 
@@ -28,6 +28,3 @@ Learning how to make grid floor with glsl.
 <img src="./docs/spider-web.png" />
 
 ## Resource
-
-The "Pristine Grid" shader from
-[The Best Darn Grid Shader (Yet)](https://bgolus.medium.com/the-best-darn-grid-shader-yet-727f9278b9d8)

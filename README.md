@@ -7,3 +7,4 @@ A collection of shaders experiments
 🚀 [Live Demo](https://grid-floor.vercel.app/)
 
 <img src="./grid-floor/docs/grid-floor.gif" />
+<img src="./grid-floor/docs/light-floor.png" />
