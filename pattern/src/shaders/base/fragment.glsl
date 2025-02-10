@@ -83,5 +83,10 @@ void main()
     result = 1.0 - result;
     color = result * palette(paletteOffset, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.2, 0.25));
 
+    color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), distance(vec2(0.5), vUv));
+    // color = mix(vec3(0.0, 0.0, 1.0), color, vUv.y);
+    // multiplication gives a more vibrant color blend
+    color = color + vec3(0.0, 0.0, 1.0) * vUv.y;
+
     gl_FragColor = vec4(color, 1.0);
 }
