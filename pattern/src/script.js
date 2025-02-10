@@ -36,7 +36,9 @@ const material = new THREE.ShaderMaterial({
         uTime: { value: 0 },
         uAmplitude: { value: 0.2 },
         uFrequency: { value: 40 },
-        uSpeed: { value: 8 },
+        uSpeed: { value: 2 },
+
+        uGridSize: { value: 10 },
 
         // Palette
         uColor1: { value: new THREE.Color(palette.color1) },
@@ -58,6 +60,12 @@ patternDebug.addBinding(material.uniforms.uSpeed, 'value', {
     label: 'speed',
     min: 0,
     max: 20,
+})
+patternDebug.addBinding(material.uniforms.uGridSize, 'value', {
+    label: 'grid size',
+    min: 0,
+    max: 20,
+    step: 1,
 })
 
 paletteDebug.addBinding(palette, 'color1').on('change', () => {

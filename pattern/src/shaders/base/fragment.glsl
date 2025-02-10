@@ -3,6 +3,11 @@ uniform float uAmplitude;
 uniform float uFrequency;
 uniform float uSpeed;
 
+uniform float uGridSize;
+
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+
 varying vec2 vUv;
 
 float square(vec2 uv, float size) {
@@ -29,33 +34,75 @@ vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d ){
   return a + b*cos( 6.28318*(c*t+d) );
 }
 
+vec3 backgroundSketch(){
+ 
+  vec2 uv = vUv;
+  float gridSize = 20.;
+  uv *= gridSize;
+  uv = fract(uv);
+ 
+  vec2 gridIndex = floor(vUv * gridSize + uTime);
+  gridIndex = floor(vUv * gridSize );
+ 
+  float distToCenter = distance(vec2(gridSize/2. - 0.5), gridIndex);
+  float size =  0.3 + 0.3* sin(distToCenter - uTime * 4. );
+  float sq = square(uv, size);
+ 
+  float paletteOffset = vUv.x * 0.2 + uTime * 0.2;
+  return sq * palette(paletteOffset, vec3(0.5,0.5,0.5), vec3(0.5,0.5,0.5), vec3(2.0,1.0,0.0), vec3(0.5,0.20,0.25));
+ 
+}
+
+vec3 backgroundSketch(vec2 uv, float gridSize) {
+    uv = fract(uv * gridSize);
+ 
+  vec2 gridIndex = floor(vUv * gridSize + uTime);
+  gridIndex = floor(vUv * gridSize );
+ 
+  float distToCenter = distance(vec2(gridSize/2. - 0.5), gridIndex);
+  float size =  0.3 + 0.3* sin(distToCenter - uTime * 4. );
+  float sq = square(uv, size);
+ 
+  float paletteOffset = vUv.x * 0.2 + uTime * 0.2;
+  return sq * palette(paletteOffset, vec3(0.5,0.5,0.5), vec3(0.5,0.5,0.5), vec3(2.0,1.0,0.0), vec3(0.5,0.20,0.25));
+}
+
 void main()
 {
+    // UV
     vec2 uv = vUv;
 
-    // modify uvs
-    float distanceUv = distance(vec2(0.5), uv);
-    float repeat = normalSin(uTime);
+    // Small Big Grids
+    uv.x = normalSin(uv.x * uGridSize);
+    uv.y = normalSin(uv.y * uGridSize);
 
-    // radial uvs
-    // using mix - appear & dissapear distortion. 0 - apply, 1 - no distortion
-    uv.x += mix(sin(distanceUv * uFrequency - uTime * uSpeed) * uAmplitude, 0.0, repeat);
-    uv.y += mix(cos(distanceUv * uFrequency - uTime * uSpeed) * uAmplitude, 0.0, repeat);
+    // Square Grid
+    uv = fract(uv * uGridSize);
 
-    // radial circles
-    float squares = square(uv, 0.6 + sin(uTime) * 0.2);
-    squares -= square(uv, 0.2 + cos(uTime) * 0.2);
-    vec3 color = vec3(squares);
+    // Grid Cell
+    vec2 gridIndex = floor(vUv * uGridSize * uTime);
+    gridIndex = floor(vUv * gridIndex);
 
-    // palette
-    float paletteOffset = distanceUv - uTime * 0.2;
-    vec3 firstPalette = palette(paletteOffset, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 1.0), vec3(0.5, 0.2, 0.25));
-    vec3 secondPalette = palette(paletteOffset * 2.0, vec3(0.8, 0.5, 0.4), vec3(0.2, 0.4, 0.2), vec3(2.0, 1.0, 1.0), vec3(0.0, 0.25, 0.25));
-    color = mix(firstPalette, secondPalette, smoothstep(0.4, 0.6, vUv.x));
+    // Position
+    float angle = uTime + uv.x + uv.y;
+    vec2 pos = vec2(cos(angle), sin(angle)) * uAmplitude;
 
-    // mix with squares
-    float cornerFade = smoothstep(0.5, 0.2, distanceUv);
-    color = mix(vec3(0.0), color, squares * cornerFade);
+    // Size Formula
+    float gridCenter = distance(vec2(uGridSize / 2.0 - 0.5), gridIndex);
+    float sizeChange = sin(uTime * uSpeed + gridCenter) * uAmplitude;
+    float circle = smoothstep(0.2 + sizeChange, 0.4 + sizeChange, distance(vec2(0.5), uv + pos));
+
+    float result = 1.0 - circle;
+
+    // Color offset
+    float paletteOffset = gridCenter * 0.1 + uTime * 0.2;
+
+    vec3 frontColor = (result) * palette(paletteOffset, vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.2, 0.25));
+
+    vec3 backColor = backgroundSketch(uv, uGridSize);
+
+    vec3 test = vec3(result);
+    vec3 color = mix(backColor, frontColor, result);
 
     gl_FragColor = vec4(color, 1.0);
 }
