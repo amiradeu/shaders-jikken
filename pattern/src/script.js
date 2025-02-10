@@ -10,7 +10,11 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
 // Debug
 const gui = new Pane()
 const patternDebug = gui.addFolder({ title: 'Pattern' })
-
+const paletteDebug = gui.addFolder({ title: 'Palette' })
+const palette = {
+    color1: '#5deea8',
+    color2: '#ef31e3',
+}
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -30,16 +34,37 @@ const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
     uniforms: {
         uTime: { value: 0 },
-        uAmplitude: { value: 0 },
-        uFrequency: { value: 0 },
-        uSpeed: { value: 0 },
+        uAmplitude: { value: 0.2 },
+        uFrequency: { value: 40 },
+        uSpeed: { value: 8 },
+
+        // Palette
+        uColor1: { value: new THREE.Color(palette.color1) },
+        uColor2: { value: new THREE.Color(palette.color2) },
     },
 })
 
 patternDebug.addBinding(material.uniforms.uAmplitude, 'value', {
     label: 'amplitude',
     min: 0,
-    max: 10,
+    max: 2,
+})
+patternDebug.addBinding(material.uniforms.uFrequency, 'value', {
+    label: 'frequency',
+    min: 0,
+    max: 100,
+})
+patternDebug.addBinding(material.uniforms.uSpeed, 'value', {
+    label: 'speed',
+    min: 0,
+    max: 20,
+})
+
+paletteDebug.addBinding(palette, 'color1').on('change', () => {
+    material.uniforms.uColor1.value.set(palette.color1)
+})
+paletteDebug.addBinding(palette, 'color2').on('change', () => {
+    material.uniforms.uColor2.value.set(palette.color2)
 })
 
 // Mesh

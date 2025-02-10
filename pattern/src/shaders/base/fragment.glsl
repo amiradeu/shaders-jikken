@@ -1,5 +1,5 @@
 uniform float uTime;
-uniform float uAmplite;
+uniform float uAmplitude;
 uniform float uFrequency;
 uniform float uSpeed;
 
@@ -32,61 +32,40 @@ vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d ){
 void main()
 {
     vec2 uv = vUv;
-    uv.x = normalSin(uv.x * 10.);
-    uv.y = normalSin(uv.y * 10.);
 
-    // moves origin point: vec2 + uv
-    // vec2 pos = vec2(0.2, 0.1);
+    // modify uvs
+    float distanceUv = distance(vec2(0.5), uv);
+    float repeat = normalSin(uTime);
 
-    // 💡 square
-    // float result = square(uv + pos, 0.7);
+    // radial uvs
+    // using mix - appear & dissapear distortion. 0 - apply, 1 - no distortion
+    uv.x += mix(sin(distanceUv * uFrequency - uTime * uSpeed) * uAmplitude, 0.0, repeat);
+    uv.y += mix(cos(distanceUv * uFrequency - uTime * uSpeed) * uAmplitude, 0.0, repeat);
 
-    // flip result -> flip 2 parameters
-    // float result = smoothstep(0.7, 0.3, uv.x);
+    // radial circles
+    float squares = square(uv, 0.6 + sin(uTime) * 0.2);
+    squares -= square(uv, 0.2 + cos(uTime) * 0.2);
+    vec3 color = vec3(squares);
 
-    // 💡 moving circle
-    vec2 circlePos = vec2(cos(uTime), sin(uTime)) * 0.2;
-    float sizeChange = sin(uTime) * 0.2;
+    // palette
+    float paletteOffset = distanceUv - uTime * 0.2;
+    vec3 firstPalette = palette(paletteOffset, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 1.0), vec3(0.5, 0.2, 0.25));
+    vec3 secondPalette = palette(paletteOffset * 2.0, vec3(0.8, 0.5, 0.4), vec3(0.2, 0.4, 0.2), vec3(2.0, 1.0, 1.0), vec3(0.0, 0.25, 0.25));
+    color = mix(firstPalette, secondPalette, smoothstep(0.4, 0.6, vUv.x));
 
-    // 💡 radial gradient
-    // length - distance to origin(0, 0)
-    // distance between 2 points
-    float circleGradient = distance(vec2(0.5), uv + circlePos);
-    float circle = smoothstep(0.2 + sizeChange, 0.4 + sizeChange, circleGradient);
-    float result = circle;
-    vec3 color = vec3(result);
-
-    // 0-1 gradient
-    // float edge = normalSin(uTime);    
-    // infinite gradient
-    // float infinite = normalSin(uv.x + uTime);
-    // make it infinite, frequent, fast
-    // float fastAndFrequent = sin(uv.x * 5. + uTime * 3.) * 0.5 + 0.5;
-
-    // 📝 terminologies
-    // frequency. how often waves repeat/appear - sin(uv.x * freq)
-    // how fast wave move - uTime * speed
-    // amplitude. how big waves/height - sin(uv.x) * amplitude
-    // displacemen/time offset. move the wave - sin(uv.x + uTime)
-
-    // float gradient = step(edge, uv.x);
-    // result = gradient;
-
-    // vec3 color = vec3(result);
-    // vec3 color = vec3(edge);
-    // vec3 color = vec3(infinite);
-    // vec3 color = vec3(fastAndFrequent);
-
-    // Palette
-    float paletteOffset = vUv.x * 0.3 + vUv.y + uTime * 0.2;
-    // flip technique: 1.0 - variable
-    result = 1.0 - result;
-    color = result * palette(paletteOffset, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.2, 0.25));
-
-    color = mix(vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), distance(vec2(0.5), vUv));
-    // color = mix(vec3(0.0, 0.0, 1.0), color, vUv.y);
-    // multiplication gives a more vibrant color blend
-    color = color + vec3(0.0, 0.0, 1.0) * vUv.y;
+    // mix with squares
+    float cornerFade = smoothstep(0.5, 0.2, distanceUv);
+    color = mix(vec3(0.0), color, squares * cornerFade);
 
     gl_FragColor = vec4(color, 1.0);
 }
+
+// 📝 terminologies
+// frequency. how often waves repeat/appear - sin(uv.x * freq)
+// how fast wave move - uTime * speed
+// amplitude. how big waves/height - sin(uv.x) * amplitude
+// displacemen/time offset. move the wave - sin(uv.x + uTime)
+// length - distance to origin(0, 0)
+// distance between 2 points
+// mix. blend color with intensity. mix(vec3(0.0, 0.0, 1.0), color, vUv.y);
+// multiplication gives a more vibrant color blend. color * uV
