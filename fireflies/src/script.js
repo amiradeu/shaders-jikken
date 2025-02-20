@@ -8,15 +8,11 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  * Base
  */
 // Debug
-const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: 'Fireflies' })
-const guiTest = {
-    x: 2,
+const gui = new Pane({ title: 'Fireflies' })
+
+const debugObject = {
+    color: '#e2ff0a',
 }
-shaderGUI.addBinding(guiTest, 'x', {
-    min: 0,
-    max: 10,
-})
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -25,38 +21,27 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 /**
- * Test mesh
- */
-// Geometry
-const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
-
-// Material
-const material = new THREE.ShaderMaterial({
-    vertexShader: baseVertexShader,
-    fragmentShader: baseFragmentShader,
-    side: THREE.DoubleSide,
-})
-
-// Mesh
-const mesh = new THREE.Mesh(geometry, material)
-scene.add(mesh)
-
-// Axes helper
-const axesHelper = new THREE.AxesHelper(3)
-scene.add(axesHelper)
-
-/**
  * Sizes
  */
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
+    pixelRatio: Math.min(window.devicePixelRatio, 2),
 }
+sizes.resolution = new THREE.Vector2(
+    sizes.width * sizes.pixelRatio,
+    sizes.height * sizes.pixelRatio
+)
 
 window.addEventListener('resize', () => {
     // Update sizes
     sizes.width = window.innerWidth
     sizes.height = window.innerHeight
+    sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
+    sizes.resolution.set(
+        sizes.width * sizes.pixelRatio,
+        sizes.height * sizes.pixelRatio
+    )
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
@@ -64,7 +49,7 @@ window.addEventListener('resize', () => {
 
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(sizes.pixelRatio)
 })
 
 /**
@@ -77,7 +62,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     100
 )
-camera.position.set(0.25, -0.25, 1)
+camera.position.set(1, 0, 1)
 scene.add(camera)
 
 // Controls
@@ -91,7 +76,61 @@ const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
 })
 renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setPixelRatio(sizes.pixelRatio)
+
+/**
+ * Fireflies
+ */
+const count = 24
+
+// Geometry
+const positionsArray = new Float32Array(count * 3)
+
+for (let i = 0; i < count; i++) {
+    const i3 = i * 3
+    positionsArray[i3] = Math.random() - 0.5
+    positionsArray[i3 + 1] = Math.random() - 0.5
+    positionsArray[i3 + 2] = Math.random() - 0.5
+}
+
+const geometry = new THREE.BufferGeometry()
+geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positionsArray, 3)
+)
+
+// Material
+const material = new THREE.ShaderMaterial({
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: baseVertexShader,
+    fragmentShader: baseFragmentShader,
+    uniforms: {
+        uColor: { value: new THREE.Color(debugObject.color) },
+        uSize: { value: 0.1 },
+        uResolution: {
+            value: sizes.resolution,
+        },
+    },
+})
+
+gui.addBinding(debugObject, 'color').on('change', () => {
+    material.uniforms.uColor.value.set(debugObject.color)
+})
+gui.addBinding(material.uniforms.uSize, 'value', {
+    label: 'size',
+    min: 0.01,
+    max: 1,
+    step: 0.01,
+})
+
+// Fireflies
+const fireflies = new THREE.Points(geometry, material)
+scene.add(fireflies)
+
+// Axes helper
+const axesHelper = new THREE.AxesHelper(3)
+scene.add(axesHelper)
 
 /**
  * Animate
