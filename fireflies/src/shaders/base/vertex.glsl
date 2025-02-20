@@ -1,9 +1,12 @@
 uniform float uSize;
 uniform vec2 uResolution;
 
+attribute float aRandomness;
+
+varying float vRandomness;
+
 void main()
 {
-
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
     vec4 viewPosition = viewMatrix * modelPosition;
 
@@ -13,4 +16,6 @@ void main()
     gl_PointSize = uSize * uResolution.y;
     // scale point with camera perspective
     gl_PointSize *= 1.0 / - viewPosition.z;
+
+    vRandomness = aRandomness;
 }

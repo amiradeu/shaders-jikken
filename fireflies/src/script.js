@@ -85,18 +85,25 @@ const count = 24
 
 // Geometry
 const positionsArray = new Float32Array(count * 3)
+const randomness = new Float32Array(count * 1)
 
 for (let i = 0; i < count; i++) {
     const i3 = i * 3
     positionsArray[i3] = Math.random() - 0.5
     positionsArray[i3 + 1] = Math.random() - 0.5
     positionsArray[i3 + 2] = Math.random() - 0.5
+
+    randomness[i] = Math.random()
 }
 
 const geometry = new THREE.BufferGeometry()
 geometry.setAttribute(
     'position',
     new THREE.Float32BufferAttribute(positionsArray, 3)
+)
+geometry.setAttribute(
+    'aRandomness',
+    new THREE.Float32BufferAttribute(randomness, 1)
 )
 
 // Material
@@ -111,6 +118,15 @@ const material = new THREE.ShaderMaterial({
         uResolution: {
             value: sizes.resolution,
         },
+        uTime: {
+            value: 0,
+        },
+        uSpeed: {
+            value: 2,
+        },
+        uPhaseShift: {
+            value: 80,
+        },
     },
 })
 
@@ -122,6 +138,20 @@ gui.addBinding(material.uniforms.uSize, 'value', {
     min: 0.01,
     max: 1,
     step: 0.01,
+})
+
+const flickerGUI = gui.addFolder({ title: 'Flicker Animation' })
+flickerGUI.addBinding(material.uniforms.uSpeed, 'value', {
+    label: 'speed',
+    min: 1,
+    max: 10,
+    step: 1,
+})
+flickerGUI.addBinding(material.uniforms.uPhaseShift, 'value', {
+    label: 'phase shift',
+    min: 1,
+    max: 100,
+    step: 1,
 })
 
 // Fireflies
@@ -138,6 +168,9 @@ scene.add(axesHelper)
 const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
+
+    // Update materials
+    material.uniforms.uTime.value = elapsedTime
 
     // Update controls
     controls.update()
