@@ -12,8 +12,10 @@ void main()
 
     gl_Position = projectionMatrix * viewPosition;
 
+    // size variation
+    gl_PointSize = uSize * aRandomness;
     // scale point with window resize
-    gl_PointSize = uSize * uResolution.y;
+    gl_PointSize *= uResolution.y;
     // scale point with camera perspective
     gl_PointSize *= 1.0 / - viewPosition.z;
 

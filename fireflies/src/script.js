@@ -77,11 +77,15 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(sizes.pixelRatio)
+// renderer.setClearColor(new THREE.Color('#bb3131'))
 
 /**
  * Fireflies
  */
-const count = 24
+
+const count = 100
+const radius = 0.5
+const fillRadius = 0.8 // outer percent of circle to fill
 
 // Geometry
 const positionsArray = new Float32Array(count * 3)
@@ -89,9 +93,27 @@ const randomness = new Float32Array(count * 1)
 
 for (let i = 0; i < count; i++) {
     const i3 = i * 3
-    positionsArray[i3] = Math.random() - 0.5
-    positionsArray[i3 + 1] = Math.random() - 0.5
-    positionsArray[i3 + 2] = Math.random() - 0.5
+
+    // Place in a spherical randomness, instead of cube
+    // radius, phi, theta
+    const spherical = new THREE.Spherical(
+        radius * (1 - fillRadius + Math.random() * fillRadius),
+        Math.random() * Math.PI,
+        Math.random() * Math.PI * 2
+    )
+
+    const position = new THREE.Vector3()
+    position.setFromSpherical(spherical)
+
+    // Random spherical position
+    positionsArray[i3] = position.x
+    positionsArray[i3 + 1] = position.y
+    positionsArray[i3 + 2] = position.z
+
+    // Random cube position
+    // positionsArray[i3] = Math.random() - 0.5
+    // positionsArray[i3 + 1] = Math.random() - 0.5
+    // positionsArray[i3 + 2] = Math.random() - 0.5
 
     randomness[i] = Math.random()
 }
@@ -130,6 +152,25 @@ const material = new THREE.ShaderMaterial({
     },
 })
 
+// Fireflies
+const fireflies = new THREE.Points(geometry, material)
+scene.add(fireflies)
+
+// Destroy fireflies
+const destroy = () => {
+    scene.remove(fireflies)
+    geometry.dispose()
+    material.dispose()
+}
+
+// Axes helper
+const axesHelper = new THREE.AxesHelper(3)
+scene.add(axesHelper)
+
+/**
+ * Debug
+ */
+
 gui.addBinding(debugObject, 'color').on('change', () => {
     material.uniforms.uColor.value.set(debugObject.color)
 })
@@ -153,14 +194,6 @@ flickerGUI.addBinding(material.uniforms.uPhaseShift, 'value', {
     max: 100,
     step: 1,
 })
-
-// Fireflies
-const fireflies = new THREE.Points(geometry, material)
-scene.add(fireflies)
-
-// Axes helper
-const axesHelper = new THREE.AxesHelper(3)
-scene.add(axesHelper)
 
 /**
  * Animate
