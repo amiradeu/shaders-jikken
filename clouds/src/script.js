@@ -9,14 +9,7 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: 'Shader' })
-const guiTest = {
-    x: 2,
-}
-shaderGUI.addBinding(guiTest, 'x', {
-    min: 0,
-    max: 10,
-})
+const shaderGUI = gui.addFolder({ title: 'Clouds' })
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -24,8 +17,13 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// Debug Object
+const debugObject = {
+    skyColor: '#adb3e2',
+}
+
 /**
- * Test mesh
+ * Clouds
  */
 // Geometry
 const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
@@ -38,8 +36,25 @@ const material = new THREE.ShaderMaterial({
     uniforms: {
         uTime: { value: 0 },
         uNoise: { value: null },
+        uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
+        uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
     },
 })
+
+shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {
+    label: 'Sun pos.',
+    min: -5,
+    max: 5,
+})
+
+shaderGUI
+    .addBinding(debugObject, 'skyColor', {
+        label: 'Sky',
+    })
+    .on('change', (e) => {
+        if (e.last) material.uniforms.uSkyColor.value.set(debugObject.skyColor)
+    })
+
 const textureLoader = new THREE.TextureLoader()
 const noiseTexture = textureLoader.load('noise2.png', (texture) => {
     material.uniforms.uNoise.value = texture
@@ -90,7 +105,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     100
 )
-camera.position.set(0.25, -0.25, 1)
+camera.position.set(0, 0, 0.5)
 scene.add(camera)
 
 // Controls
