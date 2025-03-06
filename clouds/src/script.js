@@ -35,7 +35,20 @@ const material = new THREE.ShaderMaterial({
     vertexShader: baseVertexShader,
     fragmentShader: baseFragmentShader,
     side: THREE.DoubleSide,
+    uniforms: {
+        uTime: { value: 0 },
+        uNoise: { value: null },
+    },
 })
+const textureLoader = new THREE.TextureLoader()
+const noiseTexture = textureLoader.load('noise2.png', (texture) => {
+    material.uniforms.uNoise.value = texture
+})
+noiseTexture.wrapS = THREE.RepeatWrapping
+noiseTexture.wrapT = THREE.RepeatWrapping
+noiseTexture.minFilter = THREE.NearestMipmapLinearFilter
+noiseTexture.magFilter = THREE.NearestMipmapLinearFilter
+// console.log(noiseTexture)
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
@@ -99,6 +112,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
+
+    // Update materials
+    material.uniforms.uTime.value = elapsedTime
 
     // Update controls
     controls.update()
