@@ -16,13 +16,13 @@ import bicubicFilterFragmentShader from './shaders/bicubicFilter/fragment.glsl'
  */
 // Debug
 const gui = new Pane()
-const shaderGUI = gui.addFolder({ title: 'Clouds' })
+const cloudsGUI = gui.addFolder({ title: '☁️ Clouds' })
+const envGUI = gui.addFolder({ title: '🌏 Environment' })
 
 // Debug Object
 const debugObject = {
     sunColor: '#f2c59a',
     skyColor: '#d5d3f2',
-    cloudsColor: '#cbcbdf',
     resolution: 2,
 }
 
@@ -61,7 +61,6 @@ noiseTexture.wrapS = THREE.RepeatWrapping
 noiseTexture.wrapT = THREE.RepeatWrapping
 noiseTexture.minFilter = THREE.NearestMipmapLinearFilter
 noiseTexture.magFilter = THREE.NearestMipmapLinearFilter
-// console.log(noiseTexture)
 
 const blueNoiseTexture = textureLoader.load('blue-noise.png', (texture) => {
     material.uniforms.uBlueNoise.value = texture
@@ -109,7 +108,7 @@ const renderTarget = new THREE.WebGLRenderTarget(
     sizes.width / debugObject.resolution,
     sizes.height / debugObject.resolution
 )
-shaderGUI
+cloudsGUI
     .addBinding(debugObject, 'resolution', {
         options: {
             '1x': 1,
@@ -130,12 +129,6 @@ const rtScene = new THREE.Scene()
 // rtScene.background = new THREE.Color('#fcfec0')
 
 /**
- * Axes helper
- */
-const axesHelper = new THREE.AxesHelper(3)
-rtScene.add(axesHelper)
-
-/**
  * Clouds
  */
 // Geometry
@@ -151,11 +144,11 @@ const material = new THREE.ShaderMaterial({
         uNoise: { value: null },
         uBlueNoise: { value: null },
         uFrame: { value: 0 },
+        uAbsorptionCoeff: { value: 0.9 },
 
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
         uSunColor: { value: new THREE.Color(debugObject.sunColor) },
-        uCloudsColor: { value: new THREE.Color(debugObject.cloudsColor) },
     },
 })
 
@@ -163,13 +156,20 @@ const material = new THREE.ShaderMaterial({
 const mesh = new THREE.Mesh(geometry, material)
 rtScene.add(mesh)
 
-shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {
+cloudsGUI.addBinding(material.uniforms.uAbsorptionCoeff, 'value', {
+    label: 'absorption',
+    min: 0,
+    max: 2,
+    step: 0.1,
+})
+
+envGUI.addBinding(material.uniforms.uSunPosition, 'value', {
     label: 'Sun pos.',
     min: -5,
     max: 5,
 })
 
-shaderGUI
+envGUI
     .addBinding(debugObject, 'sunColor', {
         label: 'Sun',
     })
@@ -180,7 +180,7 @@ shaderGUI
         }
     })
 
-shaderGUI
+envGUI
     .addBinding(debugObject, 'skyColor', {
         label: 'Sky',
     })
@@ -188,17 +188,6 @@ shaderGUI
         if (e.last) {
             // console.log('sky color change')
             material.uniforms.uSkyColor.value.set(debugObject.skyColor)
-        }
-    })
-
-shaderGUI
-    .addBinding(debugObject, 'cloudsColor', {
-        label: 'Clouds',
-    })
-    .on('change', (e) => {
-        if (e.last) {
-            // console.log('clouds color change')
-            material.uniforms.uCloudsColor.value.set(debugObject.cloudsColor)
         }
     })
 

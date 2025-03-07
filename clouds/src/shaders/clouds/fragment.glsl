@@ -1,18 +1,28 @@
-#define MAX_STEPS 40
+#define MAX_STEPS 50
+#define MAX_STEPS_LIGHTS 6
 #define PI 3.14159265359
 
 uniform float uTime;
 uniform sampler2D uNoise;
 uniform sampler2D uBlueNoise;
 uniform int uFrame;
+uniform float uAbsorptionCoeff;
 
 uniform vec3 uSunPosition;
 uniform vec3 uSunColor;
 uniform vec3 uSkyColor;
-uniform vec3 uCloudsColor;
 
 varying vec2 vUv;
 
+// 💡 How much light get absorbed through a volume
+// much more physically accurate
+// the further to the medium light propagates,
+// exponentially to distance it travels
+float BeersLaw(float dist, float absorption) {
+    return exp(-dist * absorption);
+}
+
+// transition between shapes
 mat2 rotate2D( float a) {
     float s = sin(a);
     float c = cos(a);
@@ -75,7 +85,7 @@ float noise(vec3 x) {
 }
 
 // Fractal Brownian Motion
-float fbm(vec3 p) {
+float fbm(vec3 p, bool lowRes) {
   vec3 q = p + uTime * 0.5 * vec3(1.0, -0.2, -1.0);
   float g = noise(q);
 
@@ -83,7 +93,13 @@ float fbm(vec3 p) {
   float scale = 0.5;
   float factor = 2.02;
 
-  for (int i = 0; i < 6; i++) {
+  int maxOctave = 6;
+
+    if(lowRes) {
+        maxOctave = 3;
+    }
+
+  for (int i = 0; i < maxOctave; i++) {
       f += scale * noise(q);
       q *= factor;
       factor += 0.21;
@@ -96,7 +112,7 @@ float fbm(vec3 p) {
 
 // where we set up how to draw the shapes
 // density: positive - inside, 0 - outside
-float scene(vec3 p) {
+float scene(vec3 p, bool lowRes) {
     // vec3 p1 = p;
     // p1.xz *= rotate2D(-PI * 0.1);
     // p1.yz *= rotate2D(PI * 0.3);
@@ -117,45 +133,63 @@ float scene(vec3 p) {
     // distance = mix(distance, s4, clamp(t - 3.0, 0.0, 1.0));
 
     float distance = sdSphere(p, 1.2);
-    float f = fbm(p);
+
+    float f = fbm(p, lowRes);
 
     return -distance + f;
 }
 
 const float MARCH_SIZE = 0.16;
+
+// Sampling Lights
+float lightmarch(vec3 position, vec3 rayDirection) {
+    vec3 lightDirection = normalize(uSunPosition);
+    float totalDensity = 0.0;
+    float marchSize = 0.03;
+
+    for(int step = 0; step < MAX_STEPS_LIGHTS; step++) {
+        position += lightDirection * marchSize * float(step);
+
+        float lightSample = scene(position, true);
+        totalDensity += lightSample;
+    }
+
+    float transmittance = BeersLaw(totalDensity, uAbsorptionCoeff);
+    return transmittance;
+}
+
 // Volumetric Raymarching
-vec4 raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
+float raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
     float depth = 0.0;
     // Blue Noise
     depth += MARCH_SIZE * offset;
 
+    // Camera & Light source
     vec3 p = rayOrigin + depth * rayDirection;
     vec3 sunDirection = normalize(uSunPosition);
 
-    vec4 res = vec4(0.0);
+    // Light absorbance
+    float totalTransmittance = 1.0;
+    float lightEnergy = 0.0;
 
     for(int i = 0; i < MAX_STEPS; i++) {
-        float density = scene(p);
+        float density = scene(p, false);
 
         // draw only when density >0 (inside clouds)
         if(density > 0.0) {
-            // Directional derivative
-            // for fast diffuse lighting
-            float diffuse = clamp((scene(p) - scene(p + 0.3 * sunDirection)) / 0.3, 0.0, 1.0);
-            vec3 lin = uCloudsColor * 1.1 + 0.8 * uSunColor * diffuse;
+            float lightTransmittance = lightmarch(p, rayDirection);
+            float luminance = density;
 
-            vec4 color = vec4(mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0,0.0), density), density);
-            color.rgb *= lin;
-            color.rgb *= color.a;
-
-            res += color * (1.0 - res.a);
+            totalTransmittance *= lightTransmittance;
+            lightEnergy += totalTransmittance * luminance;
         }
 
         depth += MARCH_SIZE;
         p = rayOrigin + depth * rayDirection;
     }
 
-    return res;
+    // return res;
+    return lightEnergy;
 }
 
 void main()
@@ -188,8 +222,8 @@ void main()
     float offset = fract(blueNoise + float(uFrame % 32) / sqrt(0.5));
 
     // ☁️ Clouds
-    vec4 res = raymarch(ro, rd, offset);
-    color = color * (1.0 - res.a) + res.rgb;
+    float res = raymarch(ro, rd, offset);
+    color = color + uSunColor * res;
 
     gl_FragColor = vec4(color, 1.0);
 
