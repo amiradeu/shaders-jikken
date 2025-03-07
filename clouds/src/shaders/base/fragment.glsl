@@ -1,8 +1,12 @@
-#define MAX_STEPS 100
+#define MAX_STEPS 40
 #define PI 3.14159265359
 
 uniform float uTime;
+uniform vec2 uResolution;
 uniform sampler2D uNoise;
+uniform sampler2D uBlueNoise;
+uniform int uFrame;
+
 uniform vec3 uSunPosition;
 uniform vec3 uSunColor;
 uniform vec3 uSkyColor;
@@ -25,7 +29,8 @@ float nextStep(float t, float len, float smo) {
     return smoothstep(0.0, smo, tt) + stp;
 }
 
-// Volume Shapes
+// SDF (Signed Distance Function) for Volumetric Raymarching
+// various volume shapes
 float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
     vec3 ab = b - a;
     vec3 ap = p - a;
@@ -64,7 +69,8 @@ float noise(vec3 x) {
   f = f * f * (3.0 - 2.0 * f);
 
   vec2 uv = (p.xy + vec2(37.0, 239.0) * p.z) + f.xy;
-  vec2 tex = texture2D(uNoise,(uv + 0.5) / 256.0, 0.0).yx;
+  // 💡 textureLod - explicitly higher detail
+  vec2 tex = textureLod(uNoise,(uv + 0.5) / 256.0, 0.0).yx;
 
   return mix( tex.x, tex.y, f.z ) * 2.0 - 1.0;
 }
@@ -88,40 +94,42 @@ float fbm(vec3 p) {
   return f;
 }
 
-// SDF (Signed Distance Function) for Volumetric Raymarching
-// positive - inside, 0 - outside
+
 // where we set up how to draw the shapes
+// density: positive - inside, 0 - outside
 float scene(vec3 p) {
-    vec3 p1 = p;
-    p1.xz *= rotate2D(-PI * 0.1);
-    p1.yz *= rotate2D(PI * 0.3);
+    // vec3 p1 = p;
+    // p1.xz *= rotate2D(-PI * 0.1);
+    // p1.yz *= rotate2D(PI * 0.3);
 
     // various volume shapes
-    float s1 = sdTorus(p1, vec2(1.3, 0.9));
-    float s2 = sdCross(p1 * 2.0, 0.6);
-    float s3 = sdSphere(p, 1.5);
-    float s4 = sdCapsule(p, vec3(-2.0, -1.5, 0.0), vec3(2.0, 1.5, 0.0), 1.0);
+    // float s1 = sdTorus(p1, vec2(1.3, 0.9));
+    // float s2 = sdCross(p1 * 2.0, 0.6);
+    // float s3 = sdSphere(p, 1.5);
+    // float s4 = sdCapsule(p, vec3(-2.0, -1.5, 0.0), vec3(2.0, 1.5, 0.0), 1.0);
 
     // time sequence
-    float seconds = 3.0;    // how long to play a shape
-    float t = mod(nextStep(uTime, seconds, 1.2), 4.0);
+    // float seconds = 10.0;    // how long to play a shape
+    // float t = mod(nextStep(uTime, seconds, 1.2), 4.0);
 
-    float distance = mix(s1, s2, clamp(t, 0.0, 1.0));
-    distance = mix(distance, s3, clamp(t - 1.0, 0.0, 1.0));
-    distance = mix(distance, s4, clamp(t - 2.0, 0.0, 1.0));
-    distance = mix(distance, s1, clamp(t - 3.0, 0.0, 1.0));
+    // float distance = mix(s3, s1, clamp(t, 0.0, 1.0));
+    // distance = mix(distance, s2, clamp(t - 1.0, 0.0, 1.0));
+    // distance = mix(distance, s3, clamp(t - 2.0, 0.0, 1.0));
+    // distance = mix(distance, s4, clamp(t - 3.0, 0.0, 1.0));
 
-    // float distance = sdSphere(p, 1.0);
+    float distance = sdSphere(p, 1.2);
     float f = fbm(p);
 
     return -distance + f;
 }
 
-const float MARCH_SIZE = 0.08;
-
+const float MARCH_SIZE = 0.16;
 // Volumetric Raymarching
-vec4 raymarch(vec3 rayOrigin, vec3 rayDirection) {
+vec4 raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
     float depth = 0.0;
+    // Blue Noise
+    depth += MARCH_SIZE * offset;
+
     vec3 p = rayOrigin + depth * rayDirection;
     vec3 sunDirection = normalize(uSunPosition);
 
@@ -156,7 +164,7 @@ void main()
     vec2 uv = vUv;
     uv -= 0.5;
 
-    // 💡 Ray origin - camera
+    // 💡 Ray origin (camera)
     vec3 ro = vec3(0.0, 0.0, 5.0);
     // Ray direction
     vec3 rd = normalize(vec3(uv, -1.0));
@@ -173,8 +181,15 @@ void main()
     // add sun color to sky
     color += 0.5 * uSunColor * pow(sun, 10.0);
 
+    // 🌀 Blue Noise Dithering
+    // remove artifacts
+    float blueNoise = texture2D(uBlueNoise, gl_FragCoord.xy / 1024.0).r;
+    // 📝 temporal aspect - reduce dithering pattern
+    // but it's not showing any differences on my screen
+    float offset = fract(blueNoise + float(uFrame % 32) / sqrt(0.5));
+
     // ☁️ Clouds
-    vec4 res = raymarch(ro, rd);
+    vec4 res = raymarch(ro, rd, offset);
     color = color * (1.0 - res.a) + res.rgb;
 
     gl_FragColor = vec4(color, 1.0);

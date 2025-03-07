@@ -26,7 +26,7 @@ const scene = new THREE.Scene()
 // Debug Object
 const debugObject = {
     sunColor: '#f2c59a',
-    skyColor: '#ccd2ff',
+    skyColor: '#d5d3f2',
     cloudsColor: '#cbcbdf',
 }
 
@@ -44,6 +44,9 @@ const material = new THREE.ShaderMaterial({
     uniforms: {
         uTime: { value: 0 },
         uNoise: { value: null },
+        uBlueNoise: { value: null },
+        uFrame: { value: 0 },
+
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
         uSunColor: { value: new THREE.Color(debugObject.sunColor) },
@@ -90,6 +93,7 @@ shaderGUI
         }
     })
 
+// Textures
 const textureLoader = new THREE.TextureLoader()
 const noiseTexture = textureLoader.load('noise2.png', (texture) => {
     material.uniforms.uNoise.value = texture
@@ -99,6 +103,14 @@ noiseTexture.wrapT = THREE.RepeatWrapping
 noiseTexture.minFilter = THREE.NearestMipmapLinearFilter
 noiseTexture.magFilter = THREE.NearestMipmapLinearFilter
 // console.log(noiseTexture)
+
+const blueNoiseTexture = textureLoader.load('blue-noise.png', (texture) => {
+    material.uniforms.uBlueNoise.value = texture
+})
+blueNoiseTexture.wrapS = THREE.RepeatWrapping
+blueNoiseTexture.wrapT = THREE.RepeatWrapping
+blueNoiseTexture.minFilter = THREE.NearestMipmapLinearFilter
+blueNoiseTexture.magFilter = THREE.NearestMipmapLinearFilter
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
@@ -169,6 +181,7 @@ const tick = () => {
 
     // Update materials
     material.uniforms.uTime.value = elapsedTime
+    material.uniforms.uFrame.value += 1
 
     // Update controls
     controls.update()
