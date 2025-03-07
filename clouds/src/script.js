@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Pane } from 'tweakpane'
+import Stats from 'stats-gl'
+
 import baseVertexShader from './shaders/base/vertex.glsl'
 import baseFragmentShader from './shaders/base/fragment.glsl'
 
@@ -10,6 +12,10 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
 // Debug
 const gui = new Pane()
 const shaderGUI = gui.addFolder({ title: 'Clouds' })
+
+const stats = new Stats({
+    trackGPU: true,
+})
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -121,6 +127,10 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+const container = document.querySelector('body')
+stats.init(renderer)
+container.appendChild(stats.dom)
+
 /**
  * Animate
  */
@@ -136,6 +146,9 @@ const tick = () => {
 
     // Render
     renderer.render(scene, camera)
+
+    // Update Stats
+    stats.update()
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
