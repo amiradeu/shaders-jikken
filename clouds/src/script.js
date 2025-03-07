@@ -25,7 +25,9 @@ const scene = new THREE.Scene()
 
 // Debug Object
 const debugObject = {
-    skyColor: '#adb3e2',
+    sunColor: '#f2c59a',
+    skyColor: '#ccd2ff',
+    cloudsColor: '#cbcbdf',
 }
 
 /**
@@ -44,6 +46,8 @@ const material = new THREE.ShaderMaterial({
         uNoise: { value: null },
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
+        uSunColor: { value: new THREE.Color(debugObject.sunColor) },
+        uCloudsColor: { value: new THREE.Color(debugObject.cloudsColor) },
     },
 })
 
@@ -54,11 +58,36 @@ shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {
 })
 
 shaderGUI
+    .addBinding(debugObject, 'sunColor', {
+        label: 'Sun',
+    })
+    .on('change', (e) => {
+        if (e.last) {
+            // console.log('sun color change')
+            material.uniforms.uSunColor.value.set(debugObject.sunColor)
+        }
+    })
+
+shaderGUI
     .addBinding(debugObject, 'skyColor', {
         label: 'Sky',
     })
     .on('change', (e) => {
-        if (e.last) material.uniforms.uSkyColor.value.set(debugObject.skyColor)
+        if (e.last) {
+            // console.log('sky color change')
+            material.uniforms.uSkyColor.value.set(debugObject.skyColor)
+        }
+    })
+
+shaderGUI
+    .addBinding(debugObject, 'cloudsColor', {
+        label: 'Clouds',
+    })
+    .on('change', (e) => {
+        if (e.last) {
+            // console.log('clouds color change')
+            material.uniforms.uCloudsColor.value.set(debugObject.cloudsColor)
+        }
     })
 
 const textureLoader = new THREE.TextureLoader()
