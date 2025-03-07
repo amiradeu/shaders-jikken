@@ -30,6 +30,19 @@ const debugObject = {
     cloudsColor: '#cbcbdf',
 }
 
+const colorScheme = {
+    violet: {
+        sunColor: '#fbaa5c',
+        skyColor: '#928aff',
+        cloudsColor: '#dbdbff',
+    },
+    day: {
+        sunColor: '#cadbe5',
+        skyColor: '#a8c8eb',
+        cloudsColor: '#efe7e4',
+    },
+}
+
 /**
  * Clouds
  */
