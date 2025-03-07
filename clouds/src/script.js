@@ -125,7 +125,6 @@ shaderGUI
         },
     })
     .on('change', () => {
-        console.log('render target change')
         // update render target
         renderTarget.setSize(
             sizes.width / debugObject.resolution,
@@ -138,9 +137,8 @@ shaderGUI
         )
     })
 
-const rtCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 const rtScene = new THREE.Scene()
-rtScene.background = new THREE.Color('#fcfec0')
+// rtScene.background = new THREE.Color('#fcfec0')
 
 /**
  * Axes helper
@@ -177,9 +175,6 @@ const material = new THREE.ShaderMaterial({
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
-// 💡 the render target will be smaller than usual,
-// so scale up to fill the screen
-mesh.scale.set(2, 2, 2)
 rtScene.add(mesh)
 
 shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {
@@ -305,7 +300,7 @@ const tick = () => {
 
     // Draw render target scene to render target
     renderer.setRenderTarget(renderTarget)
-    renderer.render(rtScene, rtCamera)
+    renderer.render(rtScene, camera)
     renderer.setRenderTarget(null)
 
     // Render scene to canvas
