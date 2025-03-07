@@ -1,5 +1,6 @@
-#define MAX_STEPS 50
+#define MAX_STEPS 60
 #define MAX_STEPS_LIGHTS 6
+#define SCATTERING_ANISO 0.3
 #define PI 3.14159265359
 
 uniform float uTime;
@@ -13,6 +14,14 @@ uniform vec3 uSunColor;
 uniform vec3 uSkyColor;
 
 varying vec2 vUv;
+
+// 💧  Anisotropic Scattering
+// light scatters in various direction & intensities due to water droplets
+// using Phase Function
+float HenyeyGreenstein(float g, float mu) {
+    float gg = g * g;
+    return (1.0 / (4.0 * PI)) * ((1.0 - gg) / pow(1.0 + gg - 2.0 * g * mu, 1.5));
+}
 
 // 💡 How much light get absorbed through a volume
 // much more physically accurate
@@ -143,12 +152,12 @@ const float MARCH_SIZE = 0.16;
 
 // Sampling Lights
 float lightmarch(vec3 position, vec3 rayDirection) {
-    vec3 lightDirection = normalize(uSunPosition);
+    vec3 sunDirection = normalize(uSunPosition);
     float totalDensity = 0.0;
     float marchSize = 0.03;
 
     for(int step = 0; step < MAX_STEPS_LIGHTS; step++) {
-        position += lightDirection * marchSize * float(step);
+        position += sunDirection * marchSize * float(step);
 
         float lightSample = scene(position, true);
         totalDensity += lightSample;
@@ -172,13 +181,16 @@ float raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
     float totalTransmittance = 1.0;
     float lightEnergy = 0.0;
 
+    // Anisotropic light scattering
+    float phase = HenyeyGreenstein(SCATTERING_ANISO, dot(rayDirection, sunDirection));
+
     for(int i = 0; i < MAX_STEPS; i++) {
         float density = scene(p, false);
 
         // draw only when density >0 (inside clouds)
         if(density > 0.0) {
             float lightTransmittance = lightmarch(p, rayDirection);
-            float luminance = density;
+            float luminance = 0.025 + density * phase;
 
             totalTransmittance *= lightTransmittance;
             lightEnergy += totalTransmittance * luminance;
