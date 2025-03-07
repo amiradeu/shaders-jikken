@@ -23,6 +23,7 @@ const debugObject = {
     sunColor: '#f2c59a',
     skyColor: '#d5d3f2',
     cloudsColor: '#cbcbdf',
+    resolution: 2,
 }
 
 const colorScheme = {
@@ -87,31 +88,59 @@ window.addEventListener('resize', () => {
     camera.aspect = sizes.width / sizes.height
     camera.updateProjectionMatrix()
 
-    rtCamera.aspect = sizes.width / resolution / (sizes.height / resolution)
-    rtCamera.updateProjectionMatrix()
-
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
     // Update render target
-    renderTarget.setSize(sizes.width / resolution, sizes.height / resolution)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // 💡 prevent stretching
+    renderTarget.setSize(
+        sizes.width / debugObject.resolution,
+        sizes.height / debugObject.resolution
+    )
+
+    // Update material resolution
+    material.uniforms.uResolution.value = new THREE.Vector2(
+        renderTarget.width,
+        renderTarget.height
+    )
 })
 
 /**
  *  Render Target
  */
-// make render target smaller
-const resolution = 0.5
+// controls the quality of render target,
+// higher value means lower quality (low res)
 const renderTarget = new THREE.WebGLRenderTarget(
-    sizes.width / resolution,
-    sizes.height / resolution
+    sizes.width / debugObject.resolution,
+    sizes.height / debugObject.resolution
 )
+shaderGUI
+    .addBinding(debugObject, 'resolution', {
+        options: {
+            '1x': 1,
+            '0.5x': 2,
+            '0.25x': 4,
+            '0.125x': 8,
+        },
+    })
+    .on('change', () => {
+        console.log('render target change')
+        // update render target
+        renderTarget.setSize(
+            sizes.width / debugObject.resolution,
+            sizes.height / debugObject.resolution
+        )
+        // update material
+        material.uniforms.uResolution.value = new THREE.Vector2(
+            renderTarget.width,
+            renderTarget.height
+        )
+    })
 
 const rtCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 const rtScene = new THREE.Scene()
-// rtScene.background = new THREE.Color('#fec0fd')
+rtScene.background = new THREE.Color('#fcfec0')
 
 /**
  * Axes helper
@@ -135,6 +164,9 @@ const material = new THREE.ShaderMaterial({
         uNoise: { value: null },
         uBlueNoise: { value: null },
         uFrame: { value: 0 },
+        uResolution: {
+            value: new THREE.Vector2(renderTarget.width, renderTarget.height),
+        },
 
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
@@ -145,6 +177,9 @@ const material = new THREE.ShaderMaterial({
 
 // Mesh
 const mesh = new THREE.Mesh(geometry, material)
+// 💡 the render target will be smaller than usual,
+// so scale up to fill the screen
+mesh.scale.set(2, 2, 2)
 rtScene.add(mesh)
 
 shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {

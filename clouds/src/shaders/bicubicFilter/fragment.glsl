@@ -69,7 +69,6 @@ vec4 texture_bicubic(sampler2D tex, vec2 uv, vec4 texelSize, vec2 fullSize, floa
     return g0(fuv.y) * (g0x * textureLod(tex, p0, lod)  + g1x * textureLod(tex, p1, lod)) + g1(fuv.y) * (g0x * textureLod(tex, p2, lod) + g1x * textureLod(tex, p3, lod));
 }
 
-
 vec4 textureBicubic(sampler2D s, vec2 uv, float lod) {
     vec2 lodSizeFloor = vec2(textureSize(s, int(lod)));
     vec2 lodSizeCeil = vec2(textureSize(s, int(lod + 1.0)));
@@ -86,6 +85,6 @@ void main() {
     vec4 color = res;
     gl_FragColor = color;
 
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
+    // #include <tonemapping_fragment>
+    // #include <colorspace_fragment>
 }
