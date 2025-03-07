@@ -2,7 +2,6 @@
 #define PI 3.14159265359
 
 uniform float uTime;
-uniform vec2 uResolution;
 uniform sampler2D uNoise;
 uniform sampler2D uBlueNoise;
 uniform int uFrame;
@@ -163,11 +162,6 @@ void main()
 {
     vec2 uv = vUv;
     uv -= 0.5;
-    uv.x *= uResolution.x / uResolution.y;
-
-    // vec2 uv = gl_FragColor.xy / uResolution.xy;
-    // uv -= 0.5;
-    // uv.x *= uResolution.x / uResolution.y;
 
     // 💡 Ray origin (camera)
     vec3 ro = vec3(0.0, 0.0, 5.0);

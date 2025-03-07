@@ -98,12 +98,6 @@ window.addEventListener('resize', () => {
         sizes.width / debugObject.resolution,
         sizes.height / debugObject.resolution
     )
-
-    // Update material resolution
-    material.uniforms.uResolution.value = new THREE.Vector2(
-        renderTarget.width,
-        renderTarget.height
-    )
 })
 
 /**
@@ -129,11 +123,6 @@ shaderGUI
         renderTarget.setSize(
             sizes.width / debugObject.resolution,
             sizes.height / debugObject.resolution
-        )
-        // update material
-        material.uniforms.uResolution.value = new THREE.Vector2(
-            renderTarget.width,
-            renderTarget.height
         )
     })
 
@@ -162,9 +151,6 @@ const material = new THREE.ShaderMaterial({
         uNoise: { value: null },
         uBlueNoise: { value: null },
         uFrame: { value: 0 },
-        uResolution: {
-            value: new THREE.Vector2(renderTarget.width, renderTarget.height),
-        },
 
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
