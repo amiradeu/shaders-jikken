@@ -3,25 +3,20 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Pane } from 'tweakpane'
 import Stats from 'stats-gl'
 
-import baseVertexShader from './shaders/base/vertex.glsl'
-import baseFragmentShader from './shaders/base/fragment.glsl'
+import getFullscreenTriangle from './utils.js'
+
+import cloudsVertexShader from './shaders/clouds/vertex.glsl'
+import cloudsFragmentShader from './shaders/clouds/fragment.glsl'
+
+import bicubicFilterVertexShader from './shaders/bicubicFilter/vertex.glsl'
+import bicubicFilterFragmentShader from './shaders/bicubicFilter/fragment.glsl'
 
 /**
- * Base
+ * Debug
  */
 // Debug
 const gui = new Pane()
 const shaderGUI = gui.addFolder({ title: 'Clouds' })
-
-const stats = new Stats({
-    trackGPU: true,
-})
-
-// Canvas
-const canvas = document.querySelector('canvas.webgl')
-
-// Scene
-const scene = new THREE.Scene()
 
 // Debug Object
 const debugObject = {
@@ -43,6 +38,87 @@ const colorScheme = {
     },
 }
 
+// Stats
+const stats = new Stats({
+    trackGPU: true,
+})
+
+/**
+ * Base
+ */
+// Canvas
+const canvas = document.querySelector('canvas.webgl')
+
+/**
+ * Textures
+ */
+const textureLoader = new THREE.TextureLoader()
+const noiseTexture = textureLoader.load('noise2.png', (texture) => {
+    material.uniforms.uNoise.value = texture
+})
+noiseTexture.wrapS = THREE.RepeatWrapping
+noiseTexture.wrapT = THREE.RepeatWrapping
+noiseTexture.minFilter = THREE.NearestMipmapLinearFilter
+noiseTexture.magFilter = THREE.NearestMipmapLinearFilter
+// console.log(noiseTexture)
+
+const blueNoiseTexture = textureLoader.load('blue-noise.png', (texture) => {
+    material.uniforms.uBlueNoise.value = texture
+})
+blueNoiseTexture.wrapS = THREE.RepeatWrapping
+blueNoiseTexture.wrapT = THREE.RepeatWrapping
+blueNoiseTexture.minFilter = THREE.NearestMipmapLinearFilter
+blueNoiseTexture.magFilter = THREE.NearestMipmapLinearFilter
+
+/**
+ * Sizes
+ */
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+}
+
+window.addEventListener('resize', () => {
+    // Update sizes
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+
+    // Update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix()
+
+    rtCamera.aspect = sizes.width / resolution / (sizes.height / resolution)
+    rtCamera.updateProjectionMatrix()
+
+    // Update renderer
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    // Update render target
+    renderTarget.setSize(sizes.width / resolution, sizes.height / resolution)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+})
+
+/**
+ *  Render Target
+ */
+// make render target smaller
+const resolution = 0.5
+const renderTarget = new THREE.WebGLRenderTarget(
+    sizes.width / resolution,
+    sizes.height / resolution
+)
+
+const rtCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+const rtScene = new THREE.Scene()
+// rtScene.background = new THREE.Color('#fec0fd')
+
+/**
+ * Axes helper
+ */
+const axesHelper = new THREE.AxesHelper(3)
+rtScene.add(axesHelper)
+
 /**
  * Clouds
  */
@@ -51,8 +127,8 @@ const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
 
 // Material
 const material = new THREE.ShaderMaterial({
-    vertexShader: baseVertexShader,
-    fragmentShader: baseFragmentShader,
+    vertexShader: cloudsVertexShader,
+    fragmentShader: cloudsFragmentShader,
     side: THREE.DoubleSide,
     uniforms: {
         uTime: { value: 0 },
@@ -66,6 +142,10 @@ const material = new THREE.ShaderMaterial({
         uCloudsColor: { value: new THREE.Color(debugObject.cloudsColor) },
     },
 })
+
+// Mesh
+const mesh = new THREE.Mesh(geometry, material)
+rtScene.add(mesh)
 
 shaderGUI.addBinding(material.uniforms.uSunPosition, 'value', {
     label: 'Sun pos.',
@@ -106,55 +186,37 @@ shaderGUI
         }
     })
 
-// Textures
-const textureLoader = new THREE.TextureLoader()
-const noiseTexture = textureLoader.load('noise2.png', (texture) => {
-    material.uniforms.uNoise.value = texture
-})
-noiseTexture.wrapS = THREE.RepeatWrapping
-noiseTexture.wrapT = THREE.RepeatWrapping
-noiseTexture.minFilter = THREE.NearestMipmapLinearFilter
-noiseTexture.magFilter = THREE.NearestMipmapLinearFilter
-// console.log(noiseTexture)
+//-- above objects are added to render target scene --//
 
-const blueNoiseTexture = textureLoader.load('blue-noise.png', (texture) => {
-    material.uniforms.uBlueNoise.value = texture
-})
-blueNoiseTexture.wrapS = THREE.RepeatWrapping
-blueNoiseTexture.wrapT = THREE.RepeatWrapping
-blueNoiseTexture.minFilter = THREE.NearestMipmapLinearFilter
-blueNoiseTexture.magFilter = THREE.NearestMipmapLinearFilter
-
-// Mesh
-const mesh = new THREE.Mesh(geometry, material)
-scene.add(mesh)
-
-// Axes helper
-const axesHelper = new THREE.AxesHelper(3)
-scene.add(axesHelper)
+// Main Scene
+const scene = new THREE.Scene()
 
 /**
- * Sizes
+ * Bicubic Filtering
  */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-}
-
-window.addEventListener('resize', () => {
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+const bicubicFilterMaterial = new THREE.ShaderMaterial({
+    vertexShader: bicubicFilterVertexShader,
+    fragmentShader: bicubicFilterFragmentShader,
+    uniforms: {
+        uTexture: {
+            value: renderTarget.texture,
+        },
+    },
+    blending: THREE.NoBlending,
+    depthWrite: false,
+    depthTest: false,
 })
 
+const bicubicFilterMesh = new THREE.Mesh(
+    getFullscreenTriangle(),
+    bicubicFilterMaterial
+    // new THREE.MeshBasicMaterial({
+    //     map: renderTarget.texture,
+    // })
+)
+// objects will be rendered even if it is not in the frustum of the camera
+bicubicFilterMesh.frustumCulled = false
+scene.add(bicubicFilterMesh)
 /**
  * Camera
  */
@@ -181,6 +243,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+/**
+ * Stats
+ */
 const container = document.querySelector('body')
 stats.init(renderer)
 container.appendChild(stats.dom)
@@ -192,14 +257,23 @@ const clock = new THREE.Clock()
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update materials
+    // Update clouds material
     material.uniforms.uTime.value = elapsedTime
     material.uniforms.uFrame.value += 1
+
+    // Update bicubic filter material
+    bicubicFilterMaterial.uniforms.uTexture.value = renderTarget.texture
+    bicubicFilterMesh.material = bicubicFilterMaterial
 
     // Update controls
     controls.update()
 
-    // Render
+    // Draw render target scene to render target
+    renderer.setRenderTarget(renderTarget)
+    renderer.render(rtScene, rtCamera)
+    renderer.setRenderTarget(null)
+
+    // Render scene to canvas
     renderer.render(scene, camera)
 
     // Update Stats
