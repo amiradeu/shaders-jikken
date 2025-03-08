@@ -138,13 +138,16 @@ const geometry = new THREE.PlaneGeometry(1, 1, 32, 32)
 const material = new THREE.ShaderMaterial({
     vertexShader: cloudsVertexShader,
     fragmentShader: cloudsFragmentShader,
-    side: THREE.DoubleSide,
+    transparent: true,
     uniforms: {
         uTime: { value: 0 },
         uNoise: { value: null },
         uBlueNoise: { value: null },
         uFrame: { value: 0 },
         uAbsorptionCoeff: { value: 0.9 },
+        uResolution: {
+            value: new THREE.Vector2(renderTarget.width, renderTarget.height),
+        },
 
         uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
@@ -215,9 +218,6 @@ const bicubicFilterMaterial = new THREE.ShaderMaterial({
 const bicubicFilterMesh = new THREE.Mesh(
     getFullscreenTriangle(),
     bicubicFilterMaterial
-    // new THREE.MeshBasicMaterial({
-    //     map: renderTarget.texture,
-    // })
 )
 // objects will be rendered even if it is not in the frustum of the camera
 bicubicFilterMesh.frustumCulled = false
