@@ -1,7 +1,7 @@
 uniform vec3 uColor;
 uniform float uTime;
-uniform float uSpeed;
-uniform float uPhaseShift;
+uniform float uFlickerSpeed;
+uniform float uFlickerSync;
 
 varying float vRandomness;
 
@@ -18,7 +18,7 @@ void main()
     // 💡 Random phase per firefly
     // phase shift - higher value, less synchronised blinking pattern
     // sin oscillates from [0,1]
-    float flicker = sin(uTime * uSpeed + vRandomness * uPhaseShift) * 0.5 + 0.5;
+    float flicker = sin(uTime * uFlickerSpeed + vRandomness * uFlickerSync) * 0.5 + 0.5;
 
     // 💡 Colored point
     vec3 color = mix(vec3(0.0), uColor, strength) * flicker;

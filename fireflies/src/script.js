@@ -10,10 +10,6 @@ import baseFragmentShader from './shaders/base/fragment.glsl'
 // Debug
 const gui = new Pane({ title: 'Fireflies' })
 
-const debugObject = {
-    color: '#e2ff0a',
-}
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -77,91 +73,120 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(sizes.pixelRatio)
-// renderer.setClearColor(new THREE.Color('#bb3131'))
+
+const parameters = {
+    // Fireflies
+    color: '#e2ff0a',
+    count: 50,
+    size: 100,
+    radius: 0.5,
+    fillRadius: 0.8, // outer percent of circle to fill
+
+    // Movement
+    speedVertical: 3.0,
+    speedEllipse: 3.0,
+
+    // Flicker
+    flickerSpeed: 4,
+    flickerSync: 80,
+}
 
 /**
  * Fireflies
  */
+let firefliesGeometry = null
+let firefliesMaterial = null
+let fireflies = null
 
-const count = 100
-const radius = 0.5
-const fillRadius = 0.8 // outer percent of circle to fill
+const generateFireflies = () => {
+    // Destroy previous fireflies
+    if (fireflies !== null) {
+        firefliesGeometry.dispose()
+        firefliesMaterial.dispose()
+        scene.remove(fireflies)
+    }
 
-// Geometry
-const positionsArray = new Float32Array(count * 3)
-const randomness = new Float32Array(count * 1)
+    const positionsArray = new Float32Array(parameters.count * 3)
+    const randomness = new Float32Array(parameters.count * 1)
 
-for (let i = 0; i < count; i++) {
-    const i3 = i * 3
+    // Geometry
+    for (let i = 0; i < parameters.count; i++) {
+        const i3 = i * 3
 
-    // Place in a spherical randomness, instead of cube
-    // radius, phi, theta
-    const spherical = new THREE.Spherical(
-        radius * (1 - fillRadius + Math.random() * fillRadius),
-        Math.random() * Math.PI,
-        Math.random() * Math.PI * 2
+        // Place in a spherical randomness, instead of cube
+        // radius, phi, theta
+        const spherical = new THREE.Spherical(
+            parameters.radius *
+                (1 -
+                    parameters.fillRadius +
+                    Math.random() * parameters.fillRadius),
+            Math.random() * Math.PI,
+            Math.random() * Math.PI * 2
+        )
+
+        const position = new THREE.Vector3()
+        position.setFromSpherical(spherical)
+
+        // Random spherical position
+        positionsArray[i3] = position.x
+        positionsArray[i3 + 1] = position.y
+        positionsArray[i3 + 2] = position.z
+
+        // Random cube position
+        // positionsArray[i3] = Math.random() - 0.5
+        // positionsArray[i3 + 1] = Math.random() - 0.5
+        // positionsArray[i3 + 2] = Math.random() - 0.5
+
+        randomness[i] = Math.random()
+    }
+
+    firefliesGeometry = new THREE.BufferGeometry()
+    firefliesGeometry.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(positionsArray, 3)
+    )
+    firefliesGeometry.setAttribute(
+        'aRandomness',
+        new THREE.Float32BufferAttribute(randomness, 1)
     )
 
-    const position = new THREE.Vector3()
-    position.setFromSpherical(spherical)
+    // Material
+    firefliesMaterial = new THREE.ShaderMaterial({
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexShader: baseVertexShader,
+        fragmentShader: baseFragmentShader,
+        uniforms: {
+            uPixelRatio: { value: sizes.pixelRatio },
+            uTime: {
+                value: 0,
+            },
 
-    // Random spherical position
-    positionsArray[i3] = position.x
-    positionsArray[i3 + 1] = position.y
-    positionsArray[i3 + 2] = position.z
+            // Fireflies
+            uColor: { value: new THREE.Color(parameters.color) },
+            uSize: { value: parameters.size },
 
-    // Random cube position
-    // positionsArray[i3] = Math.random() - 0.5
-    // positionsArray[i3 + 1] = Math.random() - 0.5
-    // positionsArray[i3 + 2] = Math.random() - 0.5
+            uSpeedVertical: { value: parameters.speedVertical },
+            uSpeedEllipse: { value: parameters.speedEllipse },
 
-    randomness[i] = Math.random()
+            uFlickerSpeed: { value: parameters.flickerSpeed },
+            uFlickerSync: { value: parameters.flickerSync },
+        },
+    })
+
+    // Fireflies
+    fireflies = new THREE.Points(firefliesGeometry, firefliesMaterial)
+    scene.add(fireflies)
 }
 
-const geometry = new THREE.BufferGeometry()
-geometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(positionsArray, 3)
+generateFireflies()
+
+// Test sphere
+const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05),
+    new THREE.MeshBasicMaterial({ color: '#f544c3' })
 )
-geometry.setAttribute(
-    'aRandomness',
-    new THREE.Float32BufferAttribute(randomness, 1)
-)
-
-// Material
-const material = new THREE.ShaderMaterial({
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    vertexShader: baseVertexShader,
-    fragmentShader: baseFragmentShader,
-    uniforms: {
-        uColor: { value: new THREE.Color(debugObject.color) },
-        uSize: { value: 0.1 },
-        uResolution: {
-            value: sizes.resolution,
-        },
-        uTime: {
-            value: 0,
-        },
-        uSpeed: {
-            value: 2,
-        },
-        uPhaseShift: {
-            value: 80,
-        },
-    },
-})
-
-// Fireflies
-const fireflies = new THREE.Points(geometry, material)
-scene.add(fireflies)
-
-// Destroy fireflies
-const destroy = () => {
-    scene.remove(fireflies)
-    geometry.dispose()
-    material.dispose()
-}
+scene.add(sphere)
 
 // Axes helper
 const axesHelper = new THREE.AxesHelper(3)
@@ -170,30 +195,79 @@ scene.add(axesHelper)
 /**
  * Debug
  */
-
-gui.addBinding(debugObject, 'color').on('change', () => {
-    material.uniforms.uColor.value.set(debugObject.color)
+// Fireflies
+gui.addBinding(parameters, 'color').on('change', () => {
+    firefliesMaterial.uniforms.uColor.value.set(parameters.color)
 })
-gui.addBinding(material.uniforms.uSize, 'value', {
-    label: 'size',
-    min: 0.01,
-    max: 1,
-    step: 0.01,
-})
-
-const flickerGUI = gui.addFolder({ title: 'Flicker Animation' })
-flickerGUI.addBinding(material.uniforms.uSpeed, 'value', {
-    label: 'speed',
+gui.addBinding(parameters, 'count', {
     min: 1,
+    max: 1000,
+    step: 1,
+}).on('change', (ev) => {
+    if (ev.last) generateFireflies()
+})
+gui.addBinding(parameters, 'radius', {
+    min: 0.1,
     max: 10,
-    step: 1,
+    step: 0.1,
+}).on('change', (ev) => {
+    if (ev.last) generateFireflies()
 })
-flickerGUI.addBinding(material.uniforms.uPhaseShift, 'value', {
-    label: 'phase shift',
+gui.addBinding(parameters, 'size', {
+    label: 'Size',
     min: 1,
-    max: 100,
+    max: 200,
     step: 1,
+}).on('change', () => {
+    firefliesMaterial.uniforms.uSize.value = parameters.size
 })
+
+// Movement
+const moveGUI = gui.addFolder({ title: 'Movement' })
+moveGUI
+    .addBinding(parameters, 'speedVertical', {
+        label: 'Vertical',
+        min: 1,
+        max: 50,
+        step: 0.1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uSpeedVertical.value =
+            parameters.speedVertical
+    })
+moveGUI
+    .addBinding(parameters, 'speedEllipse', {
+        label: 'Ellipse',
+        min: 1,
+        max: 50,
+        step: 0.1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uSpeedEllipse.value = parameters.speedEllipse
+    })
+
+// Flicker
+const flickerGUI = gui.addFolder({ title: 'Flicker' })
+flickerGUI
+    .addBinding(parameters, 'flickerSpeed', {
+        label: 'Speed',
+        min: 1,
+        max: 50,
+        step: 1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uFlickerSpeed.value = parameters.flickerSpeed
+    })
+flickerGUI
+    .addBinding(parameters, 'flickerSync', {
+        label: 'Sync',
+        min: 1,
+        max: 200,
+        step: 1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uFlickerSync.value = parameters.flickerSync
+    })
 
 /**
  * Animate
@@ -203,7 +277,7 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
     // Update materials
-    material.uniforms.uTime.value = elapsedTime
+    firefliesMaterial.uniforms.uTime.value = elapsedTime
 
     // Update controls
     controls.update()
