@@ -90,17 +90,17 @@ const parameters = {
     color: '#e2ff0a',
     count: 100,
     size: 100,
-    radius: 0.5,
+    radius: 3.0,
     fillRadius: 0.8, // outer percent of circle to fill
 
     // Movement
-    moveSpeed: 0.1,
+    moveSpeed: 0.5,
     pathSize: 0.4,
     frequencyA: 2,
     frequencyB: 5,
 
     // Flicker
-    flickerSpeed: 8,
+    flickerSpeed: 1.8,
     flickerSync: 80,
 }
 
@@ -286,9 +286,9 @@ const flickerGUI = gui.addFolder({ title: 'Flicker' })
 flickerGUI
     .addBinding(parameters, 'flickerSpeed', {
         label: 'Speed',
-        min: 1,
-        max: 50,
-        step: 1,
+        min: 0,
+        max: 5,
+        step: 0.01,
     })
     .on('change', () => {
         firefliesMaterial.uniforms.uFlickerSpeed.value = parameters.flickerSpeed
@@ -296,7 +296,7 @@ flickerGUI
 flickerGUI
     .addBinding(parameters, 'flickerSync', {
         label: 'Sync',
-        min: 1,
+        min: 0,
         max: 200,
         step: 1,
     })

@@ -26,9 +26,17 @@ void main()
     // sin oscillates from [0,1]
     float flicker = sin(uTime * uFlickerSpeed + vRandomness * uFlickerSync) * 0.5 + 0.5;
     
-    // interesting curve for blinking pattern
+    // Interesting curve for blinking pattern
+    // https://thebookofshaders.com/05/kynd.png
     // flicker = 1.0 - pow(abs(sin(PI * (uTime * uFlicker + vRandomness * uFlickerSync) / 2.0) * 0.5 + 0.5), 0.5);
-    flicker = pow(cos(PI * (uTime * (uFlickerSync * 0.1 * vRandomness)+ vRandomness * uFlickerSync) / 2.0) * 0.5 + 0.5, 0.5);
+    flicker = pow(
+                cos(
+                    PI * 
+                    (uTime * uFlickerSpeed + uFlickerSync * vRandomness) / 
+                    2.0
+                ),
+                0.5
+        );
     // flicker = 1.0 - pow(abs(sin(PI * (uTime * uFlicker + vRandomness * uPhasuFlickerSynceShift) / 2.0) * 2.0 - 1.0), 0.5);
 
     // brightness range
