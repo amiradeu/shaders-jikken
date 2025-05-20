@@ -74,20 +74,33 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(sizes.pixelRatio)
 
+/**
+ * Textures
+ */
+// Loaders
+const textureLoader = new THREE.TextureLoader()
+
+// Perlin Noise Texture
+const perlinTexture = textureLoader.load('./perlin.png')
+perlinTexture.wrapS = THREE.RepeatWrapping
+perlinTexture.wrapT = THREE.RepeatWrapping
+
 const parameters = {
     // Fireflies
     color: '#e2ff0a',
-    count: 50,
+    count: 100,
     size: 100,
     radius: 0.5,
     fillRadius: 0.8, // outer percent of circle to fill
 
     // Movement
-    speedVertical: 3.0,
-    speedEllipse: 3.0,
+    moveSpeed: 0.1,
+    pathSize: 0.4,
+    frequencyA: 2,
+    frequencyB: 5,
 
     // Flicker
-    flickerSpeed: 4,
+    flickerSpeed: 8,
     flickerSync: 80,
 }
 
@@ -166,8 +179,11 @@ const generateFireflies = () => {
             uColor: { value: new THREE.Color(parameters.color) },
             uSize: { value: parameters.size },
 
-            uSpeedVertical: { value: parameters.speedVertical },
-            uSpeedEllipse: { value: parameters.speedEllipse },
+            uPerlinTexture: { value: perlinTexture },
+            uMoveSpeed: { value: parameters.moveSpeed },
+            uFrequencyA: { value: parameters.frequencyA },
+            uFrequencyB: { value: parameters.frequencyB },
+            uPathSize: { value: parameters.pathSize },
 
             uFlickerSpeed: { value: parameters.flickerSpeed },
             uFlickerSync: { value: parameters.flickerSync },
@@ -225,25 +241,44 @@ gui.addBinding(parameters, 'size', {
 // Movement
 const moveGUI = gui.addFolder({ title: 'Movement' })
 moveGUI
-    .addBinding(parameters, 'speedVertical', {
-        label: 'Vertical',
-        min: 1,
-        max: 50,
-        step: 0.1,
+    .addBinding(parameters, 'moveSpeed', {
+        label: 'speed',
+        min: 0,
+        max: 2,
+        step: 0.01,
     })
     .on('change', () => {
-        firefliesMaterial.uniforms.uSpeedVertical.value =
-            parameters.speedVertical
+        firefliesMaterial.uniforms.uMoveSpeed.value = parameters.moveSpeed
     })
 moveGUI
-    .addBinding(parameters, 'speedEllipse', {
-        label: 'Ellipse',
-        min: 1,
-        max: 50,
+    .addBinding(parameters, 'pathSize', {
+        label: 'path size',
+        min: 0,
+        max: 5,
         step: 0.1,
     })
     .on('change', () => {
-        firefliesMaterial.uniforms.uSpeedEllipse.value = parameters.speedEllipse
+        firefliesMaterial.uniforms.uPathSize.value = parameters.pathSize
+    })
+moveGUI
+    .addBinding(parameters, 'frequencyA', {
+        label: 'Freq A',
+        min: 1,
+        max: 10,
+        step: 1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uFrequencyA.value = parameters.frequencyA
+    })
+moveGUI
+    .addBinding(parameters, 'frequencyB', {
+        label: 'Freq B',
+        min: 1,
+        max: 10,
+        step: 1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uFrequencyB.value = parameters.frequencyB
     })
 
 // Flicker
