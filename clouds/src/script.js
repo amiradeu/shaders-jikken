@@ -23,23 +23,33 @@ const envGUI = gui.addFolder({ title: '🌏 Environment' })
 const debugObject = {
     sunColor: '#f2c59a',
     skyColor: '#d5d3f2',
+    skyColor2: '#f0dac5',
+    cloudColor: '#d5d3f2',
     resolution: 2,
 }
 
 const colorScheme = {
     violet: {
+        sunColor: '#f2c59a',
+        skyColor: '#d5d3f2',
+    },
+    punk: {
         sunColor: '#fbaa5c',
         skyColor: '#928aff',
         cloudsColor: '#dbdbff',
     },
-    day: {
+    blues: {
         sunColor: '#cadbe5',
         skyColor: '#a8c8eb',
         cloudsColor: '#efe7e4',
     },
+    day: {
+        sunColor: '#cadbe5',
+        skyColor: '#d2ddf1',
+    },
 }
 
-// Stats
+// SStats
 const stats = new Stats({
     trackGPU: true,
 })
@@ -145,13 +155,13 @@ const material = new THREE.ShaderMaterial({
         uBlueNoise: { value: null },
         uFrame: { value: 0 },
         uAbsorptionCoeff: { value: 0.9 },
-        uResolution: {
-            value: new THREE.Vector2(renderTarget.width, renderTarget.height),
-        },
+        uSpeed: { value: 0.5 },
 
-        uSunPosition: { value: new THREE.Vector3(1.0, 0.0, 0.0) },
+        uSunPosition: { value: new THREE.Vector3(2.0, 2.0, -4.0) },
         uSkyColor: { value: new THREE.Color(debugObject.skyColor) },
+        uSkyColor2: { value: new THREE.Color(debugObject.skyColor2) },
         uSunColor: { value: new THREE.Color(debugObject.sunColor) },
+        uCloudColor: { value: new THREE.Color(debugObject.cloudColor) },
     },
 })
 
@@ -163,6 +173,13 @@ cloudsGUI.addBinding(material.uniforms.uAbsorptionCoeff, 'value', {
     label: 'absorption',
     min: 0,
     max: 2,
+    step: 0.1,
+})
+
+cloudsGUI.addBinding(material.uniforms.uSpeed, 'value', {
+    label: 'speed',
+    min: 0.1,
+    max: 3,
     step: 0.1,
 })
 
@@ -185,7 +202,7 @@ envGUI
 
 envGUI
     .addBinding(debugObject, 'skyColor', {
-        label: 'Sky',
+        label: 'Sky 1',
     })
     .on('change', (e) => {
         if (e.last) {
@@ -194,6 +211,26 @@ envGUI
         }
     })
 
+envGUI
+    .addBinding(debugObject, 'skyColor2', {
+        label: 'Sky 2',
+    })
+    .on('change', (e) => {
+        if (e.last) {
+            material.uniforms.uSkyColor2.value.set(debugObject.skyColor2)
+        }
+    })
+
+envGUI
+    .addBinding(debugObject, 'cloudColor', {
+        label: 'Cloud',
+    })
+    .on('change', (e) => {
+        if (e.last) {
+            // console.log('cloud color change')
+            material.uniforms.uSkyColor.value.set(debugObject.cloudColor)
+        }
+    })
 //-- above objects are added to render target scene --//
 
 // Main Scene

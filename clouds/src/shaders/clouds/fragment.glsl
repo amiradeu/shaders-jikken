@@ -3,15 +3,20 @@
 #define SCATTERING_ANISO 0.3
 #define PI 3.14159265359
 
+#include ../includes/worleyNoise.glsl
+
 uniform float uTime;
 uniform sampler2D uNoise;
 uniform sampler2D uBlueNoise;
 uniform int uFrame;
 uniform float uAbsorptionCoeff;
+uniform float uSpeed;
 
 uniform vec3 uSunPosition;
 uniform vec3 uSunColor;
 uniform vec3 uSkyColor;
+uniform vec3 uSkyColor2;
+uniform vec3 uCloudColor;
 
 varying vec2 vUv;
 
@@ -31,7 +36,7 @@ float BeersLaw(float dist, float absorption) {
     return exp(-dist * absorption);
 }
 
-// transition between shapes
+// moving clouds positions
 mat2 rotate2D( float a) {
     float s = sin(a);
     float c = cos(a);
@@ -87,15 +92,18 @@ float noise(vec3 x) {
   f = f * f * (3.0 - 2.0 * f);
 
   vec2 uv = (p.xy + vec2(37.0, 239.0) * p.z) + f.xy;
+
   // 💡 textureLod - explicitly higher detail
+  // i don't like how grainy clouds look
   vec2 tex = textureLod(uNoise,(uv + 0.5) / 256.0, 0.0).yx;
+
 
   return mix( tex.x, tex.y, f.z ) * 2.0 - 1.0;
 }
 
 // Fractal Brownian Motion
 float fbm(vec3 p, bool lowRes) {
-  vec3 q = p + uTime * 0.5 * vec3(1.0, -0.2, -1.0);
+  vec3 q = p + uTime * 0.5 * vec3(1.0, -0.2, -1.0) * uSpeed;
   float g = noise(q);
 
   float f = 0.0;
@@ -122,6 +130,7 @@ float fbm(vec3 p, bool lowRes) {
 // where we set up how to draw the shapes
 // density: positive - inside, 0 - outside
 float scene(vec3 p, bool lowRes) {
+    // ☁️ sequences of changing clouds
     // vec3 p1 = p;
     // p1.xz *= rotate2D(-PI * 0.1);
     // p1.yz *= rotate2D(PI * 0.3);
@@ -141,7 +150,16 @@ float scene(vec3 p, bool lowRes) {
     // distance = mix(distance, s3, clamp(t - 2.0, 0.0, 1.0));
     // distance = mix(distance, s4, clamp(t - 3.0, 0.0, 1.0));
 
-    float distance = sdSphere(p, 1.2);
+    // ☁️ simple circle clouds
+    // float distance = sdSphere(p, 1.2);
+
+    // ☁️ widespread clouds
+    vec3 p1 = p;
+    p1.xz *= rotate2D(-PI * 0.1);
+    // p1.yz *= rotate2D(PI * 0.3);
+    float s1 = sdSphere(p, 1.5);
+    float s2 = sdSphere(p1, 1.5);
+    float distance = s2;
 
     float f = fbm(p, lowRes);
 
@@ -165,6 +183,9 @@ float lightmarch(vec3 position, vec3 rayDirection) {
 
     float transmittance = BeersLaw(totalDensity, uAbsorptionCoeff);
     return transmittance;
+    // float uDarknessThreshold = 0.2;
+    // float clampedTransmittance = uDarknessThreshold + transmittance * (1.0 - uDarknessThreshold);
+    // return clampedTransmittance;
 }
 
 // Volumetric Raymarching
@@ -184,10 +205,12 @@ float raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
     // Anisotropic light scattering
     float phase = HenyeyGreenstein(SCATTERING_ANISO, dot(rayDirection, sunDirection));
 
+    // Raymarch loop
     for(int i = 0; i < MAX_STEPS; i++) {
+        // creating clouds
         float density = scene(p, false);
 
-        // draw only when density >0 (inside clouds)
+        // draw only when inside clouds
         if(density > 0.0) {
             float lightTransmittance = lightmarch(p, rayDirection);
             float luminance = 0.025 + density * phase;
@@ -206,6 +229,7 @@ float raymarch(vec3 rayOrigin, vec3 rayDirection, float offset) {
 
 void main()
 {
+    // 🌐 UV map
     vec2 uv = vUv;
     uv -= 0.5;
 
@@ -214,18 +238,6 @@ void main()
     // Ray direction
     vec3 rd = normalize(vec3(uv, -1.0));
 
-    vec3 color = vec3(0.0);
-
-    // 🌞 Sun and Sky
-    vec3 sunDirection = normalize(uSunPosition);
-    float sun = clamp(dot(sunDirection, rd), 0.0, 1.0);
-    // base sky color
-    color = uSkyColor;
-    // add vertical gradient to sky
-    color -= 0.8 * vec3(0.90, 0.75, 0.90) * rd.y;
-    // add sun color to sky
-    color += 0.5 * uSunColor * pow(sun, 10.0);
-
     // 🌀 Blue Noise Dithering
     // remove artifacts
     float blueNoise = texture2D(uBlueNoise, gl_FragCoord.xy / 1024.0).r;
@@ -233,9 +245,32 @@ void main()
     // but it's not showing any differences on my screen
     float offset = fract(blueNoise + float(uFrame % 32) / sqrt(0.5));
 
-    // ☁️ Clouds
+    // Light energy is returned
     float res = raymarch(ro, rd, offset);
-    color = color + uSunColor * res;
+
+    // 🌞 Sun
+    vec3 sunDirection = normalize(uSunPosition);
+    float sun = clamp(dot(sunDirection, rd), 0.0, 1.0);
+
+    // 🌌 Sky
+    // base sky color
+    vec3 sky = uSkyColor;
+    // add vertical gradient to sky
+    sky -= 0.8 * vec3(0.90, 0.75, 0.90) * rd.y;
+    // add sun color to sky
+    sky += 0.5 * uSunColor * pow(sun, 10.0);
+
+    // Clouds color
+    vec3 cloudColor = res * uCloudColor;
+
+    // Final Color
+    vec3 color = sky + uSunColor * res;
+
+    // Tonemapping
+    // makes the colors more in depth
+    color = smoothstep(0.15, 1.1, color);
+
+    vec2 d2 = worley2(vec2(vUv * 10.0 + uTime));
 
     gl_FragColor = vec4(color, 1.0);
 
