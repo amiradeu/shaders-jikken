@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { Pane } from 'tweakpane'
+
 import baseVertexShader from './shaders/base/vertex.glsl'
 import baseFragmentShader from './shaders/base/fragment.glsl'
 
@@ -15,6 +19,18 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+/**
+ * Loaders
+ */
+const textureLoader = new THREE.TextureLoader()
+const rgbeLoader = new RGBELoader()
+
+const dracoLoader = new DRACOLoader()
+dracoLoader.setDecoderPath('/draco/')
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.setDRACOLoader(dracoLoader)
 
 /**
  * Sizes
@@ -58,8 +74,7 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     100
 )
-camera.position.set(1, 0, 1)
-scene.add(camera)
+camera.position.set(-0.3, 0.2, 0.4)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
@@ -77,31 +92,78 @@ renderer.setPixelRatio(sizes.pixelRatio)
 /**
  * Textures
  */
-// Loaders
-const textureLoader = new THREE.TextureLoader()
 
 // Perlin Noise Texture
 const perlinTexture = textureLoader.load('./perlin.png')
 perlinTexture.wrapS = THREE.RepeatWrapping
 perlinTexture.wrapT = THREE.RepeatWrapping
 
+// HDR Background
+const hdrTexture = rgbeLoader.load('./dikhololo_night_2k.hdr', (envMap) => {
+    envMap.mapping = THREE.EquirectangularReflectionMapping
+
+    scene.background = envMap
+    scene.environment = envMap
+})
+
+/**
+ * Model
+ */
+gltfLoader.load('./polelamp.glb', (gltf) => {
+    gltf.scene.position.y = -1.1
+    gltf.scene.position.x = 0.2
+    scene.add(gltf.scene)
+
+    const modelFolder = gui.addFolder({ title: 'Model' })
+    modelFolder.addBinding(gltf.scene, 'visible', {
+        label: 'Pole Lamp',
+    })
+})
+
+/**
+ * Fireflies Parameters
+ */
+// Paramaters
+const PATTERN_TYPE = [
+    {
+        text: 'LISSAJOUS',
+        value: 0,
+    },
+    {
+        text: 'RANDOM',
+        value: 1,
+    },
+]
+
 const parameters = {
     // Fireflies
-    color: '#e2ff0a',
-    count: 100,
-    size: 100,
-    radius: 3.0,
-    fillRadius: 0.8, // outer percent of circle to fill
+    color: '#ffd009',
+    count: 200,
+    size: 80,
+    radius: 0.3,
+    fillRadius: 0.4, // outer percent of circle to fill
 
     // Movement
-    moveSpeed: 0.5,
+    moveRatio: 0.8, // 0-none, 1.0-all
+    moveSpeed: 0.2,
     pathSize: 0.4,
     frequencyA: 2,
     frequencyB: 5,
 
     // Flicker
-    flickerSpeed: 1.8,
+    flickerSpeed: 0.6,
     flickerSync: 80,
+
+    // Pattern
+    patternType: PATTERN_TYPE[0],
+}
+
+const setLissajousParameters = () => {
+    // update default parameter values
+}
+
+const setRandomParameters = () => {
+    // update default parameter values
 }
 
 /**
@@ -121,6 +183,7 @@ const generateFireflies = () => {
 
     const positionsArray = new Float32Array(parameters.count * 3)
     const randomness = new Float32Array(parameters.count * 1)
+    const randomMove = new Float32Array(parameters.count * 1)
 
     // Geometry
     for (let i = 0; i < parameters.count; i++) {
@@ -151,6 +214,7 @@ const generateFireflies = () => {
         // positionsArray[i3 + 2] = Math.random() - 0.5
 
         randomness[i] = Math.random()
+        randomMove[i] = Math.random()
     }
 
     firefliesGeometry = new THREE.BufferGeometry()
@@ -161,6 +225,10 @@ const generateFireflies = () => {
     firefliesGeometry.setAttribute(
         'aRandomness',
         new THREE.Float32BufferAttribute(randomness, 1)
+    )
+    firefliesGeometry.setAttribute(
+        'aRandomMove',
+        new THREE.Float32BufferAttribute(randomMove, 1)
     )
 
     // Material
@@ -180,6 +248,7 @@ const generateFireflies = () => {
             uSize: { value: parameters.size },
 
             uPerlinTexture: { value: perlinTexture },
+            uMoveRatio: { value: parameters.moveRatio },
             uMoveSpeed: { value: parameters.moveSpeed },
             uFrequencyA: { value: parameters.frequencyA },
             uFrequencyB: { value: parameters.frequencyB },
@@ -187,6 +256,8 @@ const generateFireflies = () => {
 
             uFlickerSpeed: { value: parameters.flickerSpeed },
             uFlickerSync: { value: parameters.flickerSync },
+
+            uPatternType: { value: parameters.patternType },
         },
     })
 
@@ -199,14 +270,14 @@ generateFireflies()
 
 // Test sphere
 const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05),
+    new THREE.SphereGeometry(0.1),
     new THREE.MeshBasicMaterial({ color: '#f544c3' })
 )
-scene.add(sphere)
+// scene.add(sphere)
 
 // Axes helper
 const axesHelper = new THREE.AxesHelper(3)
-scene.add(axesHelper)
+// scene.add(axesHelper)
 
 /**
  * Debug
@@ -223,9 +294,18 @@ gui.addBinding(parameters, 'count', {
     if (ev.last) generateFireflies()
 })
 gui.addBinding(parameters, 'radius', {
+    label: 'radius',
     min: 0.1,
-    max: 10,
-    step: 0.1,
+    max: 1,
+    step: 0.01,
+}).on('change', (ev) => {
+    if (ev.last) generateFireflies()
+})
+gui.addBinding(parameters, 'fillRadius', {
+    label: 'fill inside',
+    min: 0.0,
+    max: 1,
+    step: 0.01,
 }).on('change', (ev) => {
     if (ev.last) generateFireflies()
 })
@@ -241,10 +321,31 @@ gui.addBinding(parameters, 'size', {
 // Movement
 const moveGUI = gui.addFolder({ title: 'Movement' })
 moveGUI
+    .addBlade({
+        view: 'list',
+        label: 'Pattern',
+        options: PATTERN_TYPE,
+        value: parameters.patternType.value,
+    })
+    .on('change', (ev) => {
+        firefliesMaterial.uniforms.uPatternType.value = ev.value
+        // console.log(ev.value)
+    })
+moveGUI
+    .addBinding(parameters, 'moveRatio', {
+        label: 'move ratio',
+        min: 0,
+        max: 1,
+        step: 0.1,
+    })
+    .on('change', () => {
+        firefliesMaterial.uniforms.uMoveRatio.value = parameters.moveRatio
+    })
+moveGUI
     .addBinding(parameters, 'moveSpeed', {
         label: 'speed',
         min: 0,
-        max: 2,
+        max: 1,
         step: 0.01,
     })
     .on('change', () => {
@@ -309,6 +410,7 @@ flickerGUI
  */
 const clock = new THREE.Clock()
 const tick = () => {
+    // console.log(camera.position)
     const elapsedTime = clock.getElapsedTime()
 
     // Update materials
