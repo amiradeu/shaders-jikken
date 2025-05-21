@@ -55,9 +55,9 @@ void main()
 
     // Random Movement
     vec3 pos_random = vec3(
-        0.4 * sin(aRandomness * 5.0 + t),
-        0.3 * cos(aRandomness * 9.0 + t * 0.8),
-        0.3 * sin(aRandomness * 12.0 + t * 0.5)
+        pathSize * sin(a * 5.0 + t),
+        pathSize * cos(a * 9.0 + t * 0.8),
+        0.2 * sin(a * 12.0 + t * 0.5)
     );
 
     float pattern = float(uPatternType);
@@ -65,8 +65,8 @@ void main()
     // newPosition.xy += pathSize * lissajous(t, a, b, delta);
     // newPosition.z += 0.2 * sin(c * t + delta * 0.5);
     newPosition = mix(
-        newPosition + pos_lissajous, 
-        newPosition + pos_random, 
+        newPosition + pos_random,
+        newPosition + pos_lissajous,
         step(0.5, pattern)
     );
     newPosition = mix(position, newPosition, moveEnabled);

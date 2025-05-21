@@ -124,14 +124,35 @@ gltfLoader.load('./polelamp.glb', (gltf) => {
  * Fireflies Parameters
  */
 // Paramaters
-const PATTERN_TYPE = [
+const MOVE_PATTERNS = [
     {
-        text: 'LISSAJOUS',
+        text: 'Random',
+        value: 0,
+        onUpdate: () => setRandomParameters(),
+    },
+    {
+        text: 'Lissajous',
+        value: 1,
+        onUpdate: () => setLissajousParameters(),
+    },
+]
+
+const FLICKER_PATTERNS = [
+    {
+        text: 'Pattern 1',
         value: 0,
     },
     {
-        text: 'RANDOM',
+        text: 'Pattern 2',
         value: 1,
+    },
+    {
+        text: 'Pattern 3',
+        value: 2,
+    },
+    {
+        text: 'Pattern 4',
+        value: 3,
     },
 ]
 
@@ -139,31 +160,46 @@ const parameters = {
     // Fireflies
     color: '#ffd009',
     count: 200,
-    size: 80,
+    size: 20,
     radius: 0.3,
     fillRadius: 0.4, // outer percent of circle to fill
 
     // Movement
     moveRatio: 0.8, // 0-none, 1.0-all
     moveSpeed: 0.2,
-    pathSize: 0.4,
+    pathSize: 0.15,
     frequencyA: 2,
     frequencyB: 5,
 
     // Flicker
-    flickerSpeed: 0.6,
+    flickerSpeed: 1.8,
     flickerSync: 80,
 
     // Pattern
-    patternType: PATTERN_TYPE[0],
+    patternType: MOVE_PATTERNS[0].value,
+    flickerPattern: FLICKER_PATTERNS[2].value,
 }
 
 const setLissajousParameters = () => {
     // update default parameter values
+    parameters.moveSpeed = 0.1
+    firefliesMaterial.uniforms.uMoveSpeed.value = parameters.moveSpeed
+
+    parameters.flickerSpeed = 1.8
+    firefliesMaterial.uniforms.uFlickerSpeed.value = parameters.flickerSpeed
+
+    gui.refresh()
 }
 
 const setRandomParameters = () => {
     // update default parameter values
+    parameters.moveSpeed = 0.7
+    firefliesMaterial.uniforms.uMoveSpeed.value = parameters.moveSpeed
+
+    parameters.flickerSpeed = 0.7
+    firefliesMaterial.uniforms.uFlickerSpeed.value = parameters.flickerSpeed
+
+    gui.refresh()
 }
 
 /**
@@ -246,18 +282,18 @@ const generateFireflies = () => {
             // Fireflies
             uColor: { value: new THREE.Color(parameters.color) },
             uSize: { value: parameters.size },
-
             uPerlinTexture: { value: perlinTexture },
+
+            uPatternType: { value: parameters.patternType },
             uMoveRatio: { value: parameters.moveRatio },
             uMoveSpeed: { value: parameters.moveSpeed },
             uFrequencyA: { value: parameters.frequencyA },
             uFrequencyB: { value: parameters.frequencyB },
             uPathSize: { value: parameters.pathSize },
 
+            uFlickerPattern: { value: parameters.flickerPattern },
             uFlickerSpeed: { value: parameters.flickerSpeed },
             uFlickerSync: { value: parameters.flickerSync },
-
-            uPatternType: { value: parameters.patternType },
         },
     })
 
@@ -312,7 +348,7 @@ gui.addBinding(parameters, 'fillRadius', {
 gui.addBinding(parameters, 'size', {
     label: 'Size',
     min: 1,
-    max: 200,
+    max: 100,
     step: 1,
 }).on('change', () => {
     firefliesMaterial.uniforms.uSize.value = parameters.size
@@ -324,11 +360,12 @@ moveGUI
     .addBlade({
         view: 'list',
         label: 'Pattern',
-        options: PATTERN_TYPE,
-        value: parameters.patternType.value,
+        options: MOVE_PATTERNS,
+        value: parameters.patternType,
     })
     .on('change', (ev) => {
         firefliesMaterial.uniforms.uPatternType.value = ev.value
+        MOVE_PATTERNS[ev.value].onUpdate()
         // console.log(ev.value)
     })
 moveGUI
@@ -355,8 +392,8 @@ moveGUI
     .addBinding(parameters, 'pathSize', {
         label: 'path size',
         min: 0,
-        max: 5,
-        step: 0.1,
+        max: 1,
+        step: 0.01,
     })
     .on('change', () => {
         firefliesMaterial.uniforms.uPathSize.value = parameters.pathSize
@@ -384,6 +421,17 @@ moveGUI
 
 // Flicker
 const flickerGUI = gui.addFolder({ title: 'Flicker' })
+flickerGUI
+    .addBlade({
+        view: 'list',
+        label: 'Pattern',
+        options: FLICKER_PATTERNS,
+        value: parameters.flickerPattern,
+    })
+    .on('change', (ev) => {
+        firefliesMaterial.uniforms.uFlickerPattern.value = ev.value
+        // console.log(ev.value)
+    })
 flickerGUI
     .addBinding(parameters, 'flickerSpeed', {
         label: 'Speed',
